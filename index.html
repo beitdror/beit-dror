@@ -275,6 +275,27 @@
             font-size: 12px;
         }
 
+        .schedule-table .suggested-cell {
+            background: #fef9e7;
+            border: 2px dashed #f39c12;
+            color: #d68910;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .schedule-table .suggested-cell::before {
+            content: "💡";
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 10px;
+        }
+
+        .schedule-table .suggested-cell input {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
         .schedule-table .free-cell {
             background: white;
             cursor: pointer;
@@ -743,7 +764,11 @@
                         </div>
                         <div class="legend-item">
                             <div class="legend-box" style="background: var(--bg-fixed);"></div>
-                            <span>משבצת קבועה (חובה)</span>
+                            <span>משבצת סגורה (חובה - לא ניתן לשינוי)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background: #fef9e7; border: 2px dashed #f39c12;"></div>
+                            <span>משבצת מוצעת (עם הנחיה - ניתן לשינוי)</span>
                         </div>
                     </div>
                 </div>
@@ -886,31 +911,31 @@
                 { time: '06:30', type: 'free' },
                 { time: '07:00', type: 'fixed', content: 'א.בוקר - Breakfast', days: [2] },
                 { time: '07:30', type: 'free' },
-                { time: '08:00', type: 'free' },
+                { time: '08:00', type: 'suggested', content: 'לימודים / פעילות בוקר', days: [0,1,2,3,4] },
                 { time: '08:30', type: 'free' },
                 { time: '09:00', type: 'fixed', content: 'א.בוקר - Breakfast', days: [5] },
                 { time: '09:30', type: 'free' },
-                { time: '10:00', type: 'free' },
+                { time: '10:00', type: 'suggested', content: 'לימודים / פעילות', days: [0,1,2,3,4] },
                 { time: '10:30', type: 'free' },
                 { time: '11:00', type: 'free' },
                 { time: '11:30', type: 'free' },
-                { time: '12:00', type: 'free' },
+                { time: '12:00', type: 'suggested', content: 'ארוחת צהריים / פנאי', days: [5,6] },
                 { time: '12:30', type: 'free' },
                 { time: '13:00', type: 'free' },
                 { time: '13:30', type: 'free' },
                 { time: '14:00', type: 'fixed', content: 'א.צהריים - Lunch', days: [0,1,2,3,4,5,6] },
-                { time: '14:30', type: 'free' },
+                { time: '14:30', type: 'suggested', content: 'מנוחה / פעילות חופשית', days: [0,1,2,3,4,5,6] },
                 { time: '15:00', type: 'free' },
                 { time: '15:30', type: 'free' },
                 { time: '16:00', type: 'fixed', content: 'קבוצת בית - House group', days: [2] },
-                { time: '16:30', type: 'free' },
+                { time: '16:30', type: 'suggested', content: 'ספורט / פעילות חוץ', days: [0,1,3,4,5,6] },
                 { time: '17:00', type: 'fixed', content: 'כניסה - Entry', days: [1,2,3,5,6] },
                 { time: '17:30', type: 'free' },
                 { time: '18:00', type: 'fixed', content: 'יום בית - House day', days: [2] },
                 { time: '18:30', type: 'free' },
                 { time: '19:00', type: 'free' },
                 { time: '19:30', type: 'fixed', content: 'א.ערב - Dinner', days: [0,1,2,3,4,5,6] },
-                { time: '20:00', type: 'free' },
+                { time: '20:00', type: 'suggested', content: 'פעילות ערב / חברים', days: [0,1,2,3,4,5,6] },
                 { time: '20:30', type: 'free' },
                 { time: '21:00', type: 'free' },
                 { time: '21:30', type: 'free' },
@@ -1065,6 +1090,17 @@
                     
                     if (timeSlot.type === 'fixed' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
                         html += `<td class="fixed-cell">${timeSlot.content}</td>`;
+                    } else if (timeSlot.type === 'suggested' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
+                        const value = studentScheduleData[key] || '';
+                        const placeholder = timeSlot.content || 'הצעה...';
+                        html += `<td class="suggested-cell">
+                            <input type="text" 
+                                   data-day="${dayIndex}" 
+                                   data-time="${timeIndex}"
+                                   value="${value}"
+                                   onchange="updateStudentData(${dayIndex}, ${timeIndex}, this.value)"
+                                   placeholder="${placeholder}">
+                        </td>`;
                     } else {
                         const value = studentScheduleData[key] || '';
                         html += `<td class="free-cell">
@@ -1320,6 +1356,33 @@
                     
                     if (timeSlot.type === 'fixed' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
                         html += `<td class="fixed-cell">${timeSlot.content}</td>`;
+                    } else if (timeSlot.type === 'suggested' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
+                        if (entry) {
+                            html += `<td class="suggested-cell">
+                                <div class="cell-content">
+                                    <input type="text" 
+                                           class="editable-input" 
+                                           value="${entry.content}"
+                                           onchange="updateEntryContent('${submission.id}', ${dayIndex}, ${timeIndex}, this.value)">
+                                    <span class="status-badge status-${entry.status}">
+                                        ${entry.status === 'pending' ? 'ממתין' : entry.status === 'approved' ? 'אושר' : 'נדחה'}
+                                    </span>
+                                    <div class="cell-actions">
+                                        ${entry.status === 'pending' ? `
+                                            <button class="btn btn-success btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'approved')">✓</button>
+                                            <button class="btn btn-danger btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'rejected')">✗</button>
+                                        ` : ''}
+                                        <button class="btn btn-secondary btn-sm" onclick="showMoveEntryModal('${submission.id}', ${dayIndex}, ${timeIndex})">⏰</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteEntry('${submission.id}', ${dayIndex}, ${timeIndex})">🗑️</button>
+                                    </div>
+                                </div>
+                            </td>`;
+                        } else {
+                            html += `<td class="suggested-cell">
+                                <small style="color: #d68910;">💡 ${timeSlot.content}</small><br>
+                                <button class="btn btn-secondary btn-sm" onclick="showAddEntryModal('${submission.id}', ${dayIndex}, ${timeIndex})">➕ הוסף</button>
+                            </td>`;
+                        }
                     } else if (entry) {
                         html += `<td class="free-cell">
                             <div class="cell-content">
@@ -1691,16 +1754,41 @@
                                 <label>סוג</label>
                                 <select onchange="updateTimeSlot(${index}, 'type', this.value)">
                                     <option value="free" ${timeSlot.type === 'free' ? 'selected' : ''}>חופשי</option>
-                                    <option value="fixed" ${timeSlot.type === 'fixed' ? 'selected' : ''}>קבוע</option>
+                                    <option value="suggested" ${timeSlot.type === 'suggested' ? 'selected' : ''}>מוצע (עם הנחיה)</option>
+                                    <option value="fixed" ${timeSlot.type === 'fixed' ? 'selected' : ''}>סגור (חובה)</option>
                                 </select>
                             </div>
                         </div>
                         
                         ${timeSlot.type === 'fixed' ? `
                             <div class="form-group">
-                                <label>תוכן</label>
+                                <label>תוכן (חובה - לא ניתן לשינוי)</label>
                                 <input type="text" value="${timeSlot.content || ''}" 
-                                       onchange="updateTimeSlot(${index}, 'content', this.value)">
+                                       onchange="updateTimeSlot(${index}, 'content', this.value)"
+                                       style="border-color: #dc2626;">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>ימים</label>
+                                <div class="days-selector">
+                                    ${scheduleStructure.days.map((day, dayIndex) => `
+                                        <div class="day-checkbox">
+                                            <input type="checkbox" 
+                                                   id="day-${index}-${dayIndex}"
+                                                   ${timeSlot.days && timeSlot.days.includes(dayIndex) ? 'checked' : ''}
+                                                   onchange="updateTimeSlotDays(${index})">
+                                            <label for="day-${index}-${dayIndex}">${day}</label>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : timeSlot.type === 'suggested' ? `
+                            <div class="form-group">
+                                <label>טקסט הנחיה (מה הנער אמור לכתוב)</label>
+                                <input type="text" value="${timeSlot.content || ''}" 
+                                       onchange="updateTimeSlot(${index}, 'content', this.value)"
+                                       placeholder="לדוגמה: לימודים / פעילות בוקר"
+                                       style="border-color: #f39c12;">
                             </div>
                             
                             <div class="form-group">
@@ -1730,9 +1818,9 @@
         function updateTimeSlot(index, field, value) {
             if (field === 'type') {
                 scheduleStructure.times[index].type = value;
-                if (value === 'fixed') {
-                    scheduleStructure.times[index].content = '';
-                    scheduleStructure.times[index].days = [];
+                if (value === 'fixed' || value === 'suggested') {
+                    scheduleStructure.times[index].content = scheduleStructure.times[index].content || '';
+                    scheduleStructure.times[index].days = scheduleStructure.times[index].days || [];
                 } else {
                     delete scheduleStructure.times[index].content;
                     delete scheduleStructure.times[index].days;
