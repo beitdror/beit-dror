@@ -739,6 +739,16 @@
         <div id="coordinator-tab" class="tab-content">
             <div class="card">
                 <h2 style="margin-bottom: 20px;">אישור בקשות</h2>
+                
+                <div class="combined-view-controls" style="margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0; min-width: 250px;">
+                        <label>סנן לפי שבוע</label>
+                        <select id="coordinatorWeekSelect" onchange="loadSubmissions()">
+                            <option value="">-- כל השבועות --</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div id="submissionsList"></div>
             </div>
         </div>
@@ -760,6 +770,11 @@
                             <span id="pendingToggleText">👁️ הצג לא מאושרים</span>
                         </button>
                     </div>
+                </div>
+                
+                <div id="pendingStatusIndicator" style="display: none; background: #dbeafe; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 2px solid #3b82f6;">
+                    <strong>🔵 מציג גם פעילויות ממתינות לאישור</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px;">פעילויות ממתינות מסומנות עם ⏳ ובצבע כחול</p>
                 </div>
 
                 <div id="combinedViewContent"></div>
@@ -1420,22 +1435,46 @@
                 console.log('📊 Snapshot received:', snapshot.exists());
                 
                 const submissions = [];
+                const weeks = new Set();
                 
                 snapshot.forEach(childSnapshot => {
-                    submissions.push({
+                    const sub = {
                         id: childSnapshot.key,
                         ...childSnapshot.val()
-                    });
+                    };
+                    submissions.push(sub);
+                    if (sub.weekDisplay) {
+                        weeks.add(sub.weekDisplay);
+                    }
                 });
 
                 console.log('✅ Loaded', submissions.length, 'submissions');
 
+                // עדכון רשימת השבועות
+                const weekSelect = document.getElementById('coordinatorWeekSelect');
+                if (weekSelect) {
+                    const currentSelection = weekSelect.value;
+                    weekSelect.innerHTML = '<option value="">-- כל השבועות --</option>';
+                    Array.from(weeks).sort().reverse().forEach(week => {
+                        const selected = week === currentSelection ? 'selected' : '';
+                        weekSelect.innerHTML += `<option value="${week}" ${selected}>${week}</option>`;
+                    });
+                }
+
+                // סינון לפי שבוע נבחר
+                const selectedWeek = weekSelect ? weekSelect.value : '';
+                const filteredSubmissions = selectedWeek 
+                    ? submissions.filter(sub => sub.weekDisplay === selectedWeek)
+                    : submissions;
+
+                console.log('📋 Showing', filteredSubmissions.length, 'submissions after filter');
+
                 // Sort by submission date (newest first)
-                submissions.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+                filteredSubmissions.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
 
                 // Group by week
                 const weekGroups = {};
-                submissions.forEach(sub => {
+                filteredSubmissions.forEach(sub => {
                     if (!weekGroups[sub.weekDisplay]) {
                         weekGroups[sub.weekDisplay] = [];
                     }
@@ -1508,6 +1547,7 @@
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-secondary btn-sm" onclick="renameStudent('${submission.id}', '${submission.studentName}')">✏️ שנה שם</button>
+                            <button class="btn btn-secondary btn-sm" onclick="changeSubmissionWeek('${submission.id}', '${submission.weekDisplay}')">📅 שנה תאריכים</button>
                             ${!isArchived ? 
                                 `<button class="btn btn-secondary btn-sm" onclick="archiveSubmission('${submission.id}')">📦 ארכיון</button>` : 
                                 `<button class="btn btn-primary btn-sm" onclick="unarchiveSubmission('${submission.id}')">📤 החזר מארכיון</button>`
@@ -1659,6 +1699,60 @@
             } catch (error) {
                 console.error('Error deleting submission:', error);
                 showToast('שגיאה במחיקה', 'danger');
+            }
+        }
+
+        async function changeSubmissionWeek(submissionId, currentWeek) {
+            if (!firebaseInitialized) return;
+
+            // בקשת תאריך התחלה חדש
+            const startDateStr = prompt(
+                'הכנס תאריך התחלה של השבוע החדש (פורמט: DD/MM/YYYY)\nלדוגמה: 16/02/2025',
+                currentWeek.split(' - ')[0]
+            );
+            
+            if (!startDateStr) return;
+
+            // בדיקת פורמט
+            const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+            const match = startDateStr.match(dateRegex);
+            
+            if (!match) {
+                showToast('פורמט תאריך לא תקין. השתמש ב-DD/MM/YYYY', 'danger');
+                return;
+            }
+
+            const [, day, month, year] = match;
+            const startDate = new Date(year, month - 1, day);
+            
+            // בדיקה שזה יום ראשון
+            if (startDate.getDay() !== 0) {
+                if (!confirm('התאריך שהזנת אינו יום ראשון. להמשיך בכל זאת?')) {
+                    return;
+                }
+            }
+
+            // חישוב תאריך סיום (שבת)
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+
+            const weekDisplay = formatWeekRange(startDate, endDate);
+
+            if (!confirm(`להעביר את הלוז לשבוע:\n${weekDisplay}?`)) {
+                return;
+            }
+
+            try {
+                await db.ref(`submissions/${submissionId}`).update({
+                    weekStart: startDate.toISOString(),
+                    weekEnd: endDate.toISOString(),
+                    weekDisplay: weekDisplay
+                });
+                showToast('התאריכים שונו בהצלחה');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error changing week:', error);
+                showToast('שגיאה בשינוי תאריכים', 'danger');
             }
         }
 
@@ -1859,9 +1953,25 @@
         // ==============================================
         function togglePendingInCombined() {
             showPendingInCombined = !showPendingInCombined;
-            document.getElementById('pendingToggleText').textContent = 
-                showPendingInCombined ? '👁️‍🗨️ הסתר לא מאושרים' : '👁️ הצג לא מאושרים';
-            loadCombinedView();
+            const toggleBtn = document.getElementById('pendingToggleText');
+            const indicator = document.getElementById('pendingStatusIndicator');
+            
+            if (toggleBtn) {
+                toggleBtn.textContent = showPendingInCombined ? '👁️‍🗨️ הסתר לא מאושרים' : '👁️ הצג לא מאושרים';
+            }
+            
+            // הצגה/הסתרת אינדיקטור
+            if (indicator) {
+                indicator.style.display = showPendingInCombined ? 'block' : 'none';
+            }
+            
+            // רק אם יש שבוע נבחר
+            const selectedWeek = document.getElementById('combinedWeekSelect').value;
+            if (selectedWeek) {
+                loadCombinedView();
+            } else {
+                showToast(showPendingInCombined ? 'מצב: מציג גם לא מאושרים' : 'מצב: רק מאושרים');
+            }
         }
 
         async function loadWeeksForCombinedView() {
