@@ -693,20 +693,77 @@
             font-family: 'Heebo', sans-serif;
             font-size: 13px;
         }
+
+        @media print {
+            .tabs, .combined-view-controls, .entry-controls, .cell-actions, 
+            .btn, .header p, .legend, .submission-header button, 
+            .pendingStatusIndicator, .structure-editor-controls {
+                display: none !important;
+            }
+            
+            .header {
+                padding: 20px;
+                margin-bottom: 10px;
+                background: white !important;
+                color: black !important;
+            }
+            
+            .header h1 {
+                color: black !important;
+                text-shadow: none !important;
+            }
+            
+            .card {
+                box-shadow: none;
+                border: 2px solid #000;
+                page-break-inside: avoid;
+                background: white !important;
+            }
+            
+            .schedule-table {
+                font-size: 10px;
+            }
+            
+            .schedule-table th, .schedule-table td {
+                border: 1px solid #000 !important;
+                padding: 4px !important;
+            }
+            
+            body {
+                background: white !important;
+                padding: 10px;
+            }
+            
+            .submission-card {
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+                border: 2px solid #000 !important;
+            }
+            
+            .week-display {
+                background: #f0f0f0 !important;
+                color: #000 !important;
+                box-shadow: none !important;
+            }
+            
+            .toast {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📅 מערכת לוז דיגיטלית - בית דרור🏳️‍🌈</h1>
-            <p>אנא תמלאו את הלוז השבועי שלכם פעם אחת ותלחצו"שלח לאישור" מקווים שיהיה לכם שבוע מצוין😊</p>
+            <p>מילוי ואישור לוזים שבועיים</p>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('student')">נערימ.ות</button>
-            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית🔒</button>
-            <button class="tab" onclick="switchTab('combined')">לוז כולל🔒</button>
-            <button class="tab" onclick="switchTab('editor')">עריכת לוז⚙️🔒</button>
+            <button class="tab active" onclick="switchTab('student')">נער</button>
+            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית</button>
+            <button class="tab" onclick="switchTab('combined')">לוז כולל</button>
+            <button class="tab" onclick="switchTab('editor')">⚙️ עריכת לוז</button>
         </div>
 
         <!-- TAB 1: Student View -->
@@ -732,6 +789,10 @@
                 <button class="btn btn-success" style="margin-top: 20px; width: 100%;" onclick="submitSchedule()">
                     שלח לאישור
                 </button>
+                
+                <button class="btn btn-secondary" style="margin-top: 10px; width: 100%;" onclick="printStudentSchedule()">
+                    🖨️ הדפס לוז
+                </button>
             </div>
         </div>
 
@@ -753,7 +814,19 @@
             </div>
         </div>
 
-        <!-- TAB 3: Combined View -->
+        
+        <!-- TAB: Archive -->
+        <div id="archive-tab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">📦 ארכיון</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    לוזים שהועברו לארכיון לא מופיעים בלוז הכולל ובאישור בקשות.
+                </p>
+                <div id="archiveList"></div>
+            </div>
+        </div>
+
+<!-- TAB 3: Combined View -->
         <div id="combined-tab" class="tab-content">
             <div class="card">
                 <h2 style="margin-bottom: 20px;">לוז כולל</h2>
@@ -765,9 +838,15 @@
                             <option value="">-- בחר שבוע --</option>
                         </select>
                     </div>
-                    <div style="display: flex; align-items: flex-end; gap: 8px;">
+                    <div style="display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap;">
                         <button class="btn btn-secondary" onclick="togglePendingInCombined()">
                             <span id="pendingToggleText">👁️ הצג לא מאושרים</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="exportToGoogleCalendar()">
+                            📅 ייצא ליומן Google
+                        </button>
+                        <button class="btn btn-secondary" onclick="printCombinedSchedule()">
+                            🖨️ הדפס
                         </button>
                     </div>
                 </div>
@@ -821,7 +900,7 @@
                 
                 <div class="form-group">
                     <label>מה תעשה?</label>
-                    <input type="text" id="quickCopyContent" placeholder="לדוגמה: ים, התנדבות, לימודים">
+                    <input type="text" id="quickCopyContent" placeholder="לדוגמה: ים, קניון, בית">
                 </div>
 
                 <div class="form-group">
@@ -1087,7 +1166,7 @@
             console.log('🔄 Switching to tab:', tabName);
             
             // Check password for coordinator, combined, and editor tabs
-            if (['coordinator', 'combined', 'editor'].includes(tabName)) {
+            if (['coordinator', 'archive', 'combined', 'editor'].includes(tabName)) {
                 const password = prompt('הכנס סיסמה:');
                 
                 if (!password) {
@@ -1165,6 +1244,11 @@
                     console.error('❌ Firebase not initialized');
                     document.getElementById('combinedViewContent').innerHTML = 
                         '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר. אנא רענן את הדף.</p>';
+                }
+            } else if (tabName === 'archive') {
+                console.log('📦 Loading archive');
+                if (firebaseInitialized) {
+                    loadArchiveTab();
                 }
             } else if (tabName === 'editor') {
                 console.log('⚙️ Loading structure editor');
@@ -1455,7 +1539,7 @@
                 if (weekSelect) {
                     const currentSelection = weekSelect.value;
                     weekSelect.innerHTML = '<option value="">-- כל השבועות --</option>';
-                    Array.from(weeks).sort().reverse().forEach(week => {
+                    sortWeeksByDate(Array.from(weeks)).forEach(week => {
                         const selected = week === currentSelection ? 'selected' : '';
                         weekSelect.innerHTML += `<option value="${week}" ${selected}>${week}</option>`;
                     });
@@ -1648,17 +1732,8 @@
         // ARCHIVE AND RENAME FUNCTIONS
         // ==============================================
         async function archiveSubmission(submissionId) {
-            if (!confirm('האם להעביר לוז זה לארכיון?')) return;
-            if (!firebaseInitialized) return;
-
-            try {
-                await db.ref(`submissions/${submissionId}/archived`).set(true);
-                showToast('הועבר לארכיון');
-                loadSubmissions();
-            } catch (error) {
-                console.error('Error archiving:', error);
-                showToast('שגיאה בהעברה לארכיון', 'danger');
-            }
+            // קורא לפונקציה החדשה של ארכיון אמיתי
+            await archiveSubmissionToArchive(submissionId);
         }
 
         async function unarchiveSubmission(submissionId) {
@@ -2019,7 +2094,7 @@
                 
                 select.innerHTML = '<option value="">-- בחר שבוע --</option>';
                 
-                Array.from(weeks).sort().reverse().forEach(week => {
+                sortWeeksByDate(Array.from(weeks)).forEach(week => {
                     select.innerHTML += `<option value="${week}">${week}</option>`;
                 });
             } catch (error) {
@@ -2232,7 +2307,7 @@
                             </div>
                         ` : timeSlot.type === 'suggested' ? `
                             <div class="form-group">
-                                <label>טקסט הנחיה (מה הנער/ה אמורים לכתוב)</label>
+                                <label>טקסט הנחיה (מה הנער אמור לכתוב)</label>
                                 <input type="text" value="${timeSlot.content || ''}" 
                                        onchange="updateTimeSlot(${index}, 'content', this.value)"
                                        placeholder="לדוגמה: לימודים / פעילות בוקר"
@@ -2396,3 +2471,233 @@
     </script>
 </body>
 </html>
+        // ========================================
+        // גרסה 2.0 - תכונות חדשות
+        // ========================================
+
+        // מיון שבועות לפי תאריך
+        function sortWeeksByDate(weeksArray) {
+            return weeksArray.sort((a, b) => {
+                try {
+                    const [startA] = a.split(' - ');
+                    const [startB] = b.split(' - ');
+                    const [dayA, monthA, yearA] = startA.split('/').map(Number);
+                    const [dayB, monthB, yearB] = startB.split('/').map(Number);
+                    const dateA = new Date(yearA, monthA - 1, dayA);
+                    const dateB = new Date(yearB, monthB - 1, dayB);
+                    return dateB - dateA;
+                } catch (e) {
+                    return 0;
+                }
+            });
+        }
+
+        // ארכיון אמיתי - העברה ל-Firebase
+        async function archiveSubmissionToArchive(submissionId) {
+            if (!confirm('האם להעביר לוז זה לארכיון?\nהלוז יוסר מהרשימה ולא יופיע בלוז כולל.')) return;
+            if (!firebaseInitialized) return;
+            try {
+                const snapshot = await db.ref(`submissions/${submissionId}`).once('value');
+                const data = snapshot.val();
+                if (!data) {
+                    showToast('לוז לא נמצא', 'danger');
+                    return;
+                }
+                await db.ref(`archive/${submissionId}`).set({
+                    ...data,
+                    archivedAt: new Date().toISOString()
+                });
+                await db.ref(`submissions/${submissionId}`).remove();
+                showToast('✅ הועבר לארכיון');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error archiving:', error);
+                showToast('שגיאה בהעברה לארכיון', 'danger');
+            }
+        }
+
+        // החזרה מארכיון
+        async function restoreFromArchive(submissionId) {
+            if (!firebaseInitialized) return;
+            try {
+                const snapshot = await db.ref(`archive/${submissionId}`).once('value');
+                const data = snapshot.val();
+                if (!data) {
+                    showToast('לוז לא נמצא', 'danger');
+                    return;
+                }
+                const { archivedAt, ...submissionData } = data;
+                await db.ref(`submissions/${submissionId}`).set(submissionData);
+                await db.ref(`archive/${submissionId}`).remove();
+                showToast('✅ הוחזר מהארכיון');
+                loadArchiveTab();
+            } catch (error) {
+                console.error('Error restoring:', error);
+                showToast('שגיאה בהחזרה', 'danger');
+            }
+        }
+
+        // טעינת ארכיון
+        async function loadArchiveTab() {
+            if (!firebaseInitialized) {
+                document.getElementById('archiveList').innerHTML = '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר</p>';
+                return;
+            }
+            try {
+                const snapshot = await db.ref('archive').once('value');
+                const archived = [];
+                snapshot.forEach(childSnapshot => {
+                    archived.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                archived.sort((a, b) => new Date(b.archivedAt || b.submittedAt) - new Date(a.archivedAt || a.submittedAt));
+                const weekGroups = {};
+                archived.forEach(sub => {
+                    if (!weekGroups[sub.weekDisplay]) {
+                        weekGroups[sub.weekDisplay] = [];
+                    }
+                    weekGroups[sub.weekDisplay].push(sub);
+                });
+                renderArchiveList(weekGroups);
+            } catch (error) {
+                console.error('Error loading archive:', error);
+                document.getElementById('archiveList').innerHTML = '<p style="text-align: center; color: red;">⚠️ שגיאה בטעינת ארכיון</p>';
+            }
+        }
+
+        // רינדור רשימת ארכיון
+        function renderArchiveList(weekGroups) {
+            const container = document.getElementById('archiveList');
+            if (Object.keys(weekGroups).length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">📦 הארכיון ריק</p>';
+                return;
+            }
+            let html = '';
+            Object.keys(weekGroups).forEach(weekDisplay => {
+                html += `<div class="week-section"><div class="week-header">📦 שבוע: ${weekDisplay}</div>`;
+                weekGroups[weekDisplay].forEach(submission => {
+                    const date = new Date(submission.archivedAt || submission.submittedAt);
+                    const dateStr = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                    html += `
+                        <div class="submission-card" style="opacity: 0.85; border: 2px dashed #9ca3af; background: #f9fafb;">
+                            <div class="submission-header">
+                                <div>
+                                    <h3>📦 ${submission.studentName}</h3>
+                                    <div class="submission-date">בארכיון מ: ${dateStr}</div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-primary btn-sm" onclick="restoreFromArchive('${submission.id}')">📤 החזר</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteFromArchivePermanent('${submission.id}')">🗑️ מחק לצמיתות</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // מחיקה לצמיתות
+        async function deleteFromArchivePermanent(submissionId) {
+            if (!confirm('⚠️ האם למחוק לוז זה לצמיתות?\nפעולה זו לא ניתנת לביטול!')) return;
+            if (!firebaseInitialized) return;
+            try {
+                await db.ref(`archive/${submissionId}`).remove();
+                showToast('נמחק לצמיתות');
+                loadArchiveTab();
+            } catch (error) {
+                console.error('Error deleting:', error);
+                showToast('שגיאה במחיקה', 'danger');
+            }
+        }
+
+        // ייצוא ליומן Google
+        async function exportToGoogleCalendar() {
+            const selectedWeek = document.getElementById('combinedWeekSelect').value;
+            if (!selectedWeek) {
+                showToast('אנא בחר שבוע תחילה', 'danger');
+                return;
+            }
+            try {
+                const snapshot = await db.ref('submissions').once('value');
+                const events = [];
+                snapshot.forEach(childSnapshot => {
+                    const submission = childSnapshot.val();
+                    if (submission.weekDisplay === selectedWeek && submission.scheduleData) {
+                        submission.scheduleData.forEach(entry => {
+                            if (entry.status === 'approved') {
+                                events.push({
+                                    studentName: submission.studentName,
+                                    day: entry.day,
+                                    time: entry.time,
+                                    content: entry.content,
+                                    weekStart: submission.weekStart
+                                });
+                            }
+                        });
+                    }
+                });
+                if (events.length === 0) {
+                    showToast('אין אירועים מאושרים לייצוא', 'danger');
+                    return;
+                }
+                let icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//בית דרור//Hostel Schedule//HE
+CALNAME:לוז שבועי - ${selectedWeek}
+X-WR-CALNAME:לוז שבועי - ${selectedWeek}
+X-WR-TIMEZONE:Asia/Jerusalem
+`;
+                events.forEach((event, index) => {
+                    const weekStartDate = new Date(event.weekStart);
+                    const eventDate = new Date(weekStartDate);
+                    eventDate.setDate(weekStartDate.getDate() + event.day);
+                    const timeSlot = scheduleStructure.times[event.time];
+                    if (!timeSlot) return;
+                    const [hours, minutes] = timeSlot.time.split(':');
+                    eventDate.setHours(parseInt(hours), parseInt(minutes), 0);
+                    const endDate = new Date(eventDate);
+                    endDate.setHours(eventDate.getHours() + 1);
+                    const formatDateForICS = (date) => {
+                        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                    };
+                    icsContent += `BEGIN:VEVENT
+UID:${Date.now()}-${index}@beit-dror.hostel
+DTSTAMP:${formatDateForICS(new Date())}
+DTSTART:${formatDateForICS(eventDate)}
+DTEND:${formatDateForICS(endDate)}
+SUMMARY:${event.content} - ${event.studentName}
+DESCRIPTION:פעילות: ${event.content}\\nנער/ה: ${event.studentName}\\nשבוע: ${selectedWeek}
+LOCATION:בית דרור
+STATUS:CONFIRMED
+END:VEVENT
+`;
+                });
+                icsContent += 'END:VCALENDAR';
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `לוז-בית-דרור-${selectedWeek.replace(/\//g, '-')}.ics`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast(`✅ ${events.length} אירועים יוצאו! פתח את הקובץ ביומן Google`);
+            } catch (error) {
+                console.error('Error exporting:', error);
+                showToast('שגיאה בייצוא', 'danger');
+            }
+        }
+
+        // הדפסה
+        function printStudentSchedule() {
+            window.print();
+        }
+
+        function printCombinedSchedule() {
+            window.print();
+        }
+
+        console.log('✅ גרסה 2.0 נטענה בהצלחה!');
