@@ -281,6 +281,8 @@
             color: #d68910;
             font-size: 12px;
             position: relative;
+            min-height: 60px;
+            padding: 20px 8px 8px 8px;
         }
 
         .schedule-table .suggested-cell::before {
@@ -294,6 +296,8 @@
         .schedule-table .suggested-cell input {
             color: var(--text-primary);
             font-weight: 500;
+            white-space: normal;
+            word-wrap: break-word;
         }
 
         .schedule-table .free-cell {
@@ -695,14 +699,14 @@
     <div class="container">
         <div class="header">
             <h1>📅 מערכת לוז דיגיטלית - בית דרור🏳️‍🌈</h1>
-            <p>אנא תמלאו את הלוז השבועי שלכם פעם אחת ותלחצו "שלח לאישור" מקווים שיהיה לכם שבוע מצוין😁😄</p>
+            <p>מילוי ואישור לוזים שבועיים</p>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('student')">נערימ.ות</button>
-            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית🔒</button>
-            <button class="tab" onclick="switchTab('combined')">לוז כולל🔒</button>
-            <button class="tab" onclick="switchTab('editor')">עריכת לוז⚙️</button>
+            <button class="tab active" onclick="switchTab('student')">נער</button>
+            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית</button>
+            <button class="tab" onclick="switchTab('combined')">לוז כולל</button>
+            <button class="tab" onclick="switchTab('editor')">⚙️ עריכת לוז</button>
         </div>
 
         <!-- TAB 1: Student View -->
@@ -751,6 +755,11 @@
                             <option value="">-- בחר שבוע --</option>
                         </select>
                     </div>
+                    <div style="display: flex; align-items: flex-end; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="togglePendingInCombined()">
+                            <span id="pendingToggleText">👁️ הצג לא מאושרים</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="combinedViewContent"></div>
@@ -760,7 +769,7 @@
                     <div class="legend-items">
                         <div class="legend-item">
                             <div class="legend-box" style="background: var(--warning-bg); border-color: var(--warning);"></div>
-                            <span>חפיפה - יותר מנער/ה אחד באותה שעה</span>
+                            <span>חפיפה - יותר מנער אחד באותה שעה</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-box" style="background: var(--bg-fixed);"></div>
@@ -846,7 +855,7 @@
                 
                 <div class="form-group">
                     <label>תוכן הפעילות</label>
-                    <input type="text" id="addEntryContent" placeholder="מה הנער/ה יעשו?">
+                    <input type="text" id="addEntryContent" placeholder="מה הנער יעשה?">
                 </div>
 
                 <div class="modal-footer">
@@ -889,13 +898,18 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 firebaseInitialized = true;
-                console.log('Firebase initialized successfully');
+                console.log('✅ Firebase initialized successfully');
+                console.log('📡 Database URL:', firebaseConfig.databaseURL);
             } catch (error) {
-                console.error('Error initializing Firebase:', error);
+                console.error('❌ Error initializing Firebase:', error);
+                firebaseInitialized = false;
                 showFirebaseWarning();
+                alert('⚠️ שגיאה בחיבור ל-Firebase: ' + error.message + '\nאנא רענן את הדף או צור קשר עם התמיכה.');
             }
         } else {
+            console.error('❌ Firebase config missing');
             showFirebaseWarning();
+            alert('⚠️ Firebase לא מוגדר! אנא בדוק את הקונפיגורציה.');
         }
 
         function showFirebaseWarning() {
@@ -906,7 +920,7 @@
         // DEFAULT SCHEDULE STRUCTURE
         // ==============================================
         const defaultScheduleStructure = {
-            days: ['ראשון', 'שני', 'שלישי יום בית🛋️', 'רביעי', 'חמישי', 'שישי🌞', 'שבת'],
+            days: ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'],
             times: [
                 { time: '06:30', type: 'free' },
                 { time: '07:00', type: 'fixed', content: 'א.בוקר - Breakfast', days: [2] },
@@ -950,6 +964,7 @@
         let scheduleStructure = JSON.parse(JSON.stringify(defaultScheduleStructure));
         let currentWeek = {};
         let studentScheduleData = {};
+        let showPendingInCombined = false;
 
         // ==============================================
         // INITIALIZATION
@@ -1039,13 +1054,19 @@
         // TAB SWITCHING
         // ==============================================
         function switchTab(tabName) {
+            console.log('🔄 Switching to tab:', tabName);
+            
             // Check password for coordinator, combined, and editor tabs
             if (['coordinator', 'combined', 'editor'].includes(tabName)) {
                 const password = prompt('הכנס סיסמה:');
+                console.log('🔐 Password check for:', tabName);
+                
                 if (password !== '5522') {
+                    console.log('❌ Wrong password');
                     showToast('סיסמה שגויה', 'danger');
                     return;
                 }
+                console.log('✅ Password correct');
             }
 
             // Hide all tabs
@@ -1057,17 +1078,68 @@
             });
 
             // Show selected tab
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            event.target.classList.add('active');
+            const tabElement = document.getElementById(`${tabName}-tab`);
+            if (tabElement) {
+                tabElement.classList.add('active');
+                console.log('✅ Tab element activated:', tabName);
+            } else {
+                console.error('❌ Tab element not found:', `${tabName}-tab`);
+                showToast('שגיאה: טאב לא נמצא', 'danger');
+                return;
+            }
+            
+            // Activate button
+            try {
+                if (window.event && window.event.target) {
+                    window.event.target.classList.add('active');
+                }
+            } catch (e) {
+                console.log('⚠️ Could not activate button:', e);
+            }
 
             // Load data for specific tabs
-            if (tabName === 'coordinator' && firebaseInitialized) {
-                loadSubmissions();
-            } else if (tabName === 'combined' && firebaseInitialized) {
-                loadWeeksForCombinedView();
+            if (tabName === 'coordinator') {
+                console.log('📊 Loading coordinator data, Firebase:', firebaseInitialized);
+                if (firebaseInitialized) {
+                    try {
+                        loadSubmissions();
+                    } catch (error) {
+                        console.error('❌ Error loading submissions:', error);
+                        document.getElementById('submissionsList').innerHTML = 
+                            `<p style="text-align: center; color: red;">⚠️ שגיאה בטעינת נתונים: ${error.message}</p>`;
+                    }
+                } else {
+                    console.error('❌ Firebase not initialized');
+                    document.getElementById('submissionsList').innerHTML = 
+                        '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר. אנא רענן את הדף.</p>';
+                }
+            } else if (tabName === 'combined') {
+                console.log('📅 Loading combined view, Firebase:', firebaseInitialized);
+                if (firebaseInitialized) {
+                    try {
+                        loadWeeksForCombinedView();
+                    } catch (error) {
+                        console.error('❌ Error loading combined view:', error);
+                        document.getElementById('combinedViewContent').innerHTML = 
+                            `<p style="text-align: center; color: red;">⚠️ שגיאה בטעינת נתונים: ${error.message}</p>`;
+                    }
+                } else {
+                    console.error('❌ Firebase not initialized');
+                    document.getElementById('combinedViewContent').innerHTML = 
+                        '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר. אנא רענן את הדף.</p>';
+                }
             } else if (tabName === 'editor') {
-                renderStructureEditor();
+                console.log('⚙️ Loading structure editor');
+                try {
+                    renderStructureEditor();
+                } catch (error) {
+                    console.error('❌ Error rendering structure editor:', error);
+                    document.getElementById('structureEditorContent').innerHTML = 
+                        `<p style="text-align: center; color: red;">⚠️ שגיאה בטעינת העורך: ${error.message}</p>`;
+                }
             }
+            
+            console.log('✅ Tab switch completed');
         }
 
         // ==============================================
@@ -1077,22 +1149,63 @@
             const table = document.getElementById('studentScheduleTable');
             let html = '<thead><tr><th>שעה</th>';
             
-            scheduleStructure.days.forEach(day => {
-                html += `<th>${day}</th>`;
+            scheduleStructure.days.forEach((day, idx) => {
+                if (idx === 2) { // שלישי
+                    html += `<th>${day}<br><small style="font-weight: normal;">יום בית🛋️</small></th>`;
+                } else {
+                    html += `<th>${day}</th>`;
+                }
             });
             html += '</tr></thead><tbody>';
 
+            // מיזוג שעות כפולות
+            const mergedTimes = [];
+            const timeMap = new Map();
+            
             scheduleStructure.times.forEach((timeSlot, timeIndex) => {
-                html += `<tr><td class="time-cell">${timeSlot.time}</td>`;
+                if (!timeMap.has(timeSlot.time)) {
+                    timeMap.set(timeSlot.time, []);
+                }
+                timeMap.get(timeSlot.time).push({ ...timeSlot, originalIndex: timeIndex });
+            });
+            
+            timeMap.forEach((slots, time) => {
+                mergedTimes.push({ time, slots });
+            });
+
+            mergedTimes.forEach(({ time, slots }) => {
+                html += `<tr><td class="time-cell">${time}</td>`;
                 
                 scheduleStructure.days.forEach((day, dayIndex) => {
+                    // בדיקה איזה סוג שעה חל על היום הזה
+                    let cellType = 'free';
+                    let cellContent = '';
+                    let timeIndex = -1;
+                    
+                    // קדימות: fixed > suggested > free
+                    const fixedSlot = slots.find(s => s.type === 'fixed' && s.days && s.days.includes(dayIndex));
+                    const suggestedSlot = slots.find(s => s.type === 'suggested' && s.days && s.days.includes(dayIndex));
+                    
+                    if (fixedSlot) {
+                        cellType = 'fixed';
+                        cellContent = fixedSlot.content;
+                        timeIndex = fixedSlot.originalIndex;
+                    } else if (suggestedSlot) {
+                        cellType = 'suggested';
+                        cellContent = suggestedSlot.content;
+                        timeIndex = suggestedSlot.originalIndex;
+                    } else {
+                        // חופשי - נשתמש באינדקס הראשון
+                        timeIndex = slots[0].originalIndex;
+                    }
+                    
                     const key = `${dayIndex}-${timeIndex}`;
                     
-                    if (timeSlot.type === 'fixed' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
-                        html += `<td class="fixed-cell">${timeSlot.content}</td>`;
-                    } else if (timeSlot.type === 'suggested' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
+                    if (cellType === 'fixed') {
+                        html += `<td class="fixed-cell">${cellContent}</td>`;
+                    } else if (cellType === 'suggested') {
                         const value = studentScheduleData[key] || '';
-                        const placeholder = timeSlot.content || 'הצעה...';
+                        const placeholder = cellContent || 'הצעה...';
                         html += `<td class="suggested-cell">
                             <input type="text" 
                                    data-day="${dayIndex}" 
@@ -1270,10 +1383,19 @@
         // LOAD SUBMISSIONS (COORDINATOR VIEW)
         // ==============================================
         async function loadSubmissions() {
-            if (!firebaseInitialized) return;
+            if (!firebaseInitialized) {
+                console.error('❌ Cannot load submissions - Firebase not initialized');
+                document.getElementById('submissionsList').innerHTML = 
+                    '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר</p>';
+                return;
+            }
 
+            console.log('📥 Loading submissions...');
+            
             try {
                 const snapshot = await db.ref('submissions').once('value');
+                console.log('📊 Snapshot received:', snapshot.exists());
+                
                 const submissions = [];
                 
                 snapshot.forEach(childSnapshot => {
@@ -1282,6 +1404,8 @@
                         ...childSnapshot.val()
                     });
                 });
+
+                console.log('✅ Loaded', submissions.length, 'submissions');
 
                 // Sort by submission date (newest first)
                 submissions.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
@@ -1297,7 +1421,10 @@
 
                 renderSubmissions(weekGroups);
             } catch (error) {
-                console.error('Error loading submissions:', error);
+                console.error('❌ Error loading submissions:', error);
+                console.error('Error details:', error.code, error.message);
+                document.getElementById('submissionsList').innerHTML = 
+                    `<p style="text-align: center; color: red;">⚠️ שגיאה בטעינת נתונים: ${error.message}<br>קוד שגיאה: ${error.code || 'לא ידוע'}</p>`;
             }
         }
 
@@ -1328,13 +1455,21 @@
         function renderSubmissionCard(submission) {
             const date = new Date(submission.submittedAt);
             const dateStr = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            const isArchived = submission.archived || false;
             
             let html = `
-                <div class="submission-card">
+                <div class="submission-card" style="${isArchived ? 'opacity: 0.6; border: 2px dashed #9ca3af;' : ''}">
                     <div class="submission-header">
                         <div>
-                            <h3>${submission.studentName}</h3>
+                            <h3>${submission.studentName} ${isArchived ? '📦 (בארכיון)' : ''}</h3>
                             <div class="submission-date">נשלח: ${dateStr}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="renameStudent('${submission.id}', '${submission.studentName}')">✏️ שנה שם</button>
+                            ${!isArchived ? 
+                                `<button class="btn btn-secondary btn-sm" onclick="archiveSubmission('${submission.id}')">📦 ארכיון</button>` : 
+                                `<button class="btn btn-primary btn-sm" onclick="unarchiveSubmission('${submission.id}')">📤 החזר מארכיון</button>`
+                            }
                         </div>
                     </div>
                     <div style="overflow-x: auto;">
@@ -1342,7 +1477,9 @@
                             <thead>
                                 <tr>
                                     <th>שעה</th>
-                                    ${scheduleStructure.days.map(day => `<th>${day}</th>`).join('')}
+                                    ${scheduleStructure.days.map((day, idx) => 
+                                        idx === 2 ? `<th>${day}<br><small style="font-weight: normal;">יום בית🛋️</small></th>` : `<th>${day}</th>`
+                                    ).join('')}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1371,7 +1508,11 @@
                                         ${entry.status === 'pending' ? `
                                             <button class="btn btn-success btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'approved')">✓</button>
                                             <button class="btn btn-danger btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'rejected')">✗</button>
-                                        ` : ''}
+                                        ` : entry.status === 'approved' ? `
+                                            <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'pending')">↩️ בטל אישור</button>
+                                        ` : `
+                                            <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'pending')">↩️ בטל דחייה</button>
+                                        `}
                                         <button class="btn btn-secondary btn-sm" onclick="showMoveEntryModal('${submission.id}', ${dayIndex}, ${timeIndex})">⏰</button>
                                         <button class="btn btn-danger btn-sm" onclick="deleteEntry('${submission.id}', ${dayIndex}, ${timeIndex})">🗑️</button>
                                     </div>
@@ -1415,6 +1556,51 @@
 
             html += '</tbody></table></div></div>';
             return html;
+        }
+
+        // ==============================================
+        // ARCHIVE AND RENAME FUNCTIONS
+        // ==============================================
+        async function archiveSubmission(submissionId) {
+            if (!confirm('האם להעביר לוז זה לארכיון?')) return;
+            if (!firebaseInitialized) return;
+
+            try {
+                await db.ref(`submissions/${submissionId}/archived`).set(true);
+                showToast('הועבר לארכיון');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error archiving:', error);
+                showToast('שגיאה בהעברה לארכיון', 'danger');
+            }
+        }
+
+        async function unarchiveSubmission(submissionId) {
+            if (!firebaseInitialized) return;
+
+            try {
+                await db.ref(`submissions/${submissionId}/archived`).set(false);
+                showToast('הוחזר מהארכיון');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error unarchiving:', error);
+                showToast('שגיאה בהחזרה מארכיון', 'danger');
+            }
+        }
+
+        async function renameStudent(submissionId, currentName) {
+            const newName = prompt('הכנס שם חדש:', currentName);
+            if (!newName || newName === currentName) return;
+            if (!firebaseInitialized) return;
+
+            try {
+                await db.ref(`submissions/${submissionId}/studentName`).set(newName.trim());
+                showToast('השם שונה בהצלחה');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error renaming:', error);
+                showToast('שגיאה בשינוי שם', 'danger');
+            }
         }
 
         // ==============================================
@@ -1612,26 +1798,54 @@
         // ==============================================
         // COMBINED VIEW
         // ==============================================
+        function togglePendingInCombined() {
+            showPendingInCombined = !showPendingInCombined;
+            document.getElementById('pendingToggleText').textContent = 
+                showPendingInCombined ? '👁️‍🗨️ הסתר לא מאושרים' : '👁️ הצג לא מאושרים';
+            loadCombinedView();
+        }
+
         async function loadWeeksForCombinedView() {
-            if (!firebaseInitialized) return;
+            if (!firebaseInitialized) {
+                console.error('❌ Cannot load weeks - Firebase not initialized');
+                return;
+            }
+
+            console.log('📥 Loading weeks for combined view...');
 
             try {
                 const snapshot = await db.ref('submissions').once('value');
+                console.log('📊 Snapshot received:', snapshot.exists());
+                
                 const weeks = new Set();
                 
                 snapshot.forEach(childSnapshot => {
                     const submission = childSnapshot.val();
-                    weeks.add(submission.weekDisplay);
+                    if (submission && submission.weekDisplay) {
+                        weeks.add(submission.weekDisplay);
+                    }
                 });
 
+                console.log('✅ Found', weeks.size, 'weeks');
+
                 const select = document.getElementById('combinedWeekSelect');
+                if (!select) {
+                    console.error('❌ combinedWeekSelect element not found');
+                    return;
+                }
+                
                 select.innerHTML = '<option value="">-- בחר שבוע --</option>';
                 
                 Array.from(weeks).sort().reverse().forEach(week => {
                     select.innerHTML += `<option value="${week}">${week}</option>`;
                 });
             } catch (error) {
-                console.error('Error loading weeks:', error);
+                console.error('❌ Error loading weeks:', error);
+                console.error('Error details:', error.code, error.message);
+                const select = document.getElementById('combinedWeekSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">שגיאה בטעינה</option>';
+                }
             }
         }
 
@@ -1674,47 +1888,79 @@
                 return;
             }
 
-            // Build a map of all approved entries
+            // Build a map of all entries (approved or pending based on toggle)
             const entriesMap = {};
             
             submissions.forEach(submission => {
                 submission.scheduleData.forEach(entry => {
-                    if (entry.status === 'approved') {
+                    const shouldShow = showPendingInCombined ? 
+                        (entry.status === 'approved' || entry.status === 'pending') : 
+                        entry.status === 'approved';
+                    
+                    if (shouldShow) {
                         const key = `${entry.day}-${entry.time}`;
                         if (!entriesMap[key]) {
                             entriesMap[key] = {};
                         }
-                        if (!entriesMap[key][entry.content]) {
-                            entriesMap[key][entry.content] = [];
+                        
+                        const locationKey = entry.status === 'pending' ? 
+                            `${entry.content} ⏳` : entry.content;
+                        
+                        if (!entriesMap[key][locationKey]) {
+                            entriesMap[key][locationKey] = [];
                         }
-                        entriesMap[key][entry.content].push(submission.studentName);
+                        entriesMap[key][locationKey].push(submission.studentName);
                     }
                 });
             });
 
             let html = '<div style="overflow-x: auto;"><table class="schedule-table"><thead><tr><th>שעה</th>';
-            scheduleStructure.days.forEach(day => {
-                html += `<th>${day}</th>`;
+            scheduleStructure.days.forEach((day, idx) => {
+                if (idx === 2) {
+                    html += `<th>${day}<br><small style="font-weight: normal;">יום בית🛋️</small></th>`;
+                } else {
+                    html += `<th>${day}</th>`;
+                }
             });
             html += '</tr></thead><tbody>';
 
+            // מיזוג שעות כפולות גם כאן
+            const mergedTimes = [];
+            const timeMap = new Map();
+            
             scheduleStructure.times.forEach((timeSlot, timeIndex) => {
-                html += `<tr><td class="time-cell">${timeSlot.time}</td>`;
+                if (!timeMap.has(timeSlot.time)) {
+                    timeMap.set(timeSlot.time, timeIndex);
+                }
+            });
+            
+            timeMap.forEach((firstIndex, time) => {
+                mergedTimes.push({ time, firstIndex });
+            });
+
+            mergedTimes.forEach(({ time, firstIndex }) => {
+                html += `<tr><td class="time-cell">${time}</td>`;
                 
                 scheduleStructure.days.forEach((day, dayIndex) => {
-                    const key = `${dayIndex}-${timeIndex}`;
+                    const key = `${dayIndex}-${firstIndex}`;
                     const entries = entriesMap[key];
                     
-                    if (timeSlot.type === 'fixed' && timeSlot.days && timeSlot.days.includes(dayIndex)) {
-                        html += `<td class="fixed-cell">${timeSlot.content}</td>`;
+                    // בדיקה אם יש שעה קבועה ביום הזה
+                    const fixedSlot = scheduleStructure.times.find(s => 
+                        s.time === time && s.type === 'fixed' && s.days && s.days.includes(dayIndex)
+                    );
+                    
+                    if (fixedSlot) {
+                        html += `<td class="fixed-cell">${fixedSlot.content}</td>`;
                     } else if (entries && Object.keys(entries).length > 0) {
                         const hasOverlap = Object.values(entries).reduce((sum, students) => sum + students.length, 0) > 1;
                         const cellClass = hasOverlap ? 'free-cell highlight-overlap' : 'free-cell';
                         
                         html += `<td class="${cellClass}">`;
                         Object.keys(entries).forEach(location => {
+                            const isPending = location.includes('⏳');
                             html += `<div class="location-group">
-                                <div class="location-name">${location}</div>`;
+                                <div class="location-name" style="${isPending ? 'color: #3b82f6; font-style: italic;' : ''}">${location}</div>`;
                             entries[location].forEach(student => {
                                 html += `<span class="student-tag">${student}</span>`;
                             });
@@ -1784,7 +2030,7 @@
                             </div>
                         ` : timeSlot.type === 'suggested' ? `
                             <div class="form-group">
-                                <label>טקסט הנחיה (מה הנער/ה אמורים לכתוב)</label>
+                                <label>טקסט הנחיה (מה הנער אמור לכתוב)</label>
                                 <input type="text" value="${timeSlot.content || ''}" 
                                        onchange="updateTimeSlot(${index}, 'content', this.value)"
                                        placeholder="לדוגמה: לימודים / פעילות בוקר"
@@ -1849,8 +2095,26 @@
         }
 
         function addNewTimeSlot() {
+            const timeInput = prompt('הכנס שעה חדשה (פורמט: HH:MM, לדוגמה 13:30):');
+            
+            if (!timeInput) return;
+            
+            // בדיקת פורמט
+            const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+            if (!timeRegex.test(timeInput)) {
+                showToast('פורמט שעה לא תקין. השתמש ב-HH:MM (למשל 13:30)', 'danger');
+                return;
+            }
+            
+            // בדיקה אם השעה כבר קיימת
+            const exists = scheduleStructure.times.some(slot => slot.time === timeInput);
+            if (exists) {
+                showToast('השעה כבר קיימת', 'danger');
+                return;
+            }
+            
             const newSlot = {
-                time: '12:00',
+                time: timeInput,
                 type: 'free'
             };
             scheduleStructure.times.push(newSlot);
@@ -1859,6 +2123,7 @@
             scheduleStructure.times.sort((a, b) => a.time.localeCompare(b.time));
             
             renderStructureEditor();
+            showToast(`שעה ${timeInput} נוספה בהצלחה`);
         }
 
         async function saveScheduleStructure() {
