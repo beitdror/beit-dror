@@ -715,8 +715,8 @@
                 <h2 style="margin-bottom: 20px;">מילוי לוז שבועי</h2>
                 
                 <div class="form-group">
-                    <label>שם מלא</label>
-                    <input type="text" id="studentName" placeholder="הכנס שם מלא">
+                    <label>שם פרטי</label>
+                    <input type="text" id="studentName" placeholder="הכנס שם פרטי">
                 </div>
 
                 <div class="week-display" id="weekDisplay"></div>
@@ -784,7 +784,7 @@
                     <div class="legend-items">
                         <div class="legend-item">
                             <div class="legend-box" style="background: var(--warning-bg); border-color: var(--warning);"></div>
-                            <span>חפיפה - יותר מנער אחד באותה שעה</span>
+                            <span>חפיפה - יותר מנער/ה אחד באותה שעה</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-box" style="background: var(--bg-fixed);"></div>
@@ -870,7 +870,7 @@
                 
                 <div class="form-group">
                     <label>תוכן הפעילות</label>
-                    <input type="text" id="addEntryContent" placeholder="מה הנער יעשה?">
+                    <input type="text" id="addEntryContent" placeholder="מה הנער/ה יעשו?">
                 </div>
 
                 <div class="modal-footer">
@@ -1370,7 +1370,7 @@
             const studentName = document.getElementById('studentName').value.trim();
             
             if (!studentName) {
-                showToast('יש להזין שם מלא', 'danger');
+                showToast('יש להזין שם פרטי', 'danger');
                 return;
             }
 
@@ -1952,25 +1952,39 @@
         // COMBINED VIEW
         // ==============================================
         function togglePendingInCombined() {
+            console.log('🔄 Toggle pending - before:', showPendingInCombined);
             showPendingInCombined = !showPendingInCombined;
+            console.log('🔄 Toggle pending - after:', showPendingInCombined);
+            
             const toggleBtn = document.getElementById('pendingToggleText');
             const indicator = document.getElementById('pendingStatusIndicator');
             
             if (toggleBtn) {
                 toggleBtn.textContent = showPendingInCombined ? '👁️‍🗨️ הסתר לא מאושרים' : '👁️ הצג לא מאושרים';
+                console.log('✅ Updated button text');
+            } else {
+                console.error('❌ pendingToggleText not found');
             }
             
             // הצגה/הסתרת אינדיקטור
             if (indicator) {
                 indicator.style.display = showPendingInCombined ? 'block' : 'none';
+                console.log('✅ Updated indicator display:', showPendingInCombined ? 'visible' : 'hidden');
+            } else {
+                console.error('❌ pendingStatusIndicator not found');
             }
             
             // רק אם יש שבוע נבחר
             const selectedWeek = document.getElementById('combinedWeekSelect').value;
+            console.log('📅 Selected week:', selectedWeek || 'none');
+            
             if (selectedWeek) {
+                console.log('🔄 Reloading combined view...');
                 loadCombinedView();
             } else {
-                showToast(showPendingInCombined ? 'מצב: מציג גם לא מאושרים' : 'מצב: רק מאושרים');
+                const msg = showPendingInCombined ? 'מצב: מציג גם לא מאושרים' : 'מצב: רק מאושרים';
+                console.log('ℹ️', msg);
+                showToast(msg);
             }
         }
 
@@ -2050,6 +2064,10 @@
         }
 
         function renderCombinedView(submissions) {
+            console.log('🎨 Rendering combined view...');
+            console.log('📊 Submissions count:', submissions.length);
+            console.log('👁️ Show pending:', showPendingInCombined);
+            
             const container = document.getElementById('combinedViewContent');
             
             if (submissions.length === 0) {
@@ -2059,9 +2077,20 @@
 
             // Build a map of all entries (approved or pending based on toggle)
             const entriesMap = {};
+            let approvedCount = 0;
+            let pendingCount = 0;
             
             submissions.forEach(submission => {
+                // בדיקה שיש scheduleData
+                if (!submission.scheduleData || !Array.isArray(submission.scheduleData)) {
+                    console.warn('⚠️ Skipping submission with invalid scheduleData:', submission.studentName);
+                    return;
+                }
+                
                 submission.scheduleData.forEach(entry => {
+                    if (entry.status === 'approved') approvedCount++;
+                    if (entry.status === 'pending') pendingCount++;
+                    
                     const shouldShow = showPendingInCombined ? 
                         (entry.status === 'approved' || entry.status === 'pending') : 
                         entry.status === 'approved';
@@ -2082,6 +2111,10 @@
                     }
                 });
             });
+            
+            console.log('✅ Approved entries:', approvedCount);
+            console.log('⏳ Pending entries:', pendingCount);
+            console.log('📍 Total entries shown:', Object.keys(entriesMap).length);
 
             let html = '<div style="overflow-x: auto;"><table class="schedule-table"><thead><tr><th>שעה</th>';
             scheduleStructure.days.forEach((day, idx) => {
