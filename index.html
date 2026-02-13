@@ -1480,6 +1480,25 @@
             const dateStr = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
             const isArchived = submission.archived || false;
             
+            // בדיקה שיש scheduleData
+            if (!submission.scheduleData || !Array.isArray(submission.scheduleData)) {
+                console.error('❌ Invalid submission data:', submission);
+                return `
+                    <div class="submission-card" style="border: 2px solid red;">
+                        <div class="submission-header">
+                            <div>
+                                <h3>${submission.studentName} ⚠️</h3>
+                                <div class="submission-date">נשלח: ${dateStr}</div>
+                                <p style="color: red; margin-top: 8px;">שגיאה: נתוני לוז לא תקינים</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-danger btn-sm" onclick="if(confirm('למחוק לוז זה?')) deleteSubmission('${submission.id}')">🗑️ מחק</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
             let html = `
                 <div class="submission-card" style="${isArchived ? 'opacity: 0.6; border: 2px dashed #9ca3af;' : ''}">
                     <div class="submission-header">
@@ -1561,7 +1580,11 @@
                                     ${entry.status === 'pending' ? `
                                         <button class="btn btn-success btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'approved')">✓</button>
                                         <button class="btn btn-danger btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'rejected')">✗</button>
-                                    ` : ''}
+                                    ` : entry.status === 'approved' ? `
+                                        <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'pending')">↩️ בטל אישור</button>
+                                    ` : `
+                                        <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', ${dayIndex}, ${timeIndex}, 'pending')">↩️ בטל דחייה</button>
+                                    `}
                                     <button class="btn btn-secondary btn-sm" onclick="showMoveEntryModal('${submission.id}', ${dayIndex}, ${timeIndex})">⏰</button>
                                     <button class="btn btn-danger btn-sm" onclick="deleteEntry('${submission.id}', ${dayIndex}, ${timeIndex})">🗑️</button>
                                 </div>
@@ -1623,6 +1646,19 @@
             } catch (error) {
                 console.error('Error renaming:', error);
                 showToast('שגיאה בשינוי שם', 'danger');
+            }
+        }
+
+        async function deleteSubmission(submissionId) {
+            if (!firebaseInitialized) return;
+
+            try {
+                await db.ref(`submissions/${submissionId}`).remove();
+                showToast('הלוז נמחק בהצלחה');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error deleting submission:', error);
+                showToast('שגיאה במחיקה', 'danger');
             }
         }
 
