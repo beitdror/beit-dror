@@ -195,22 +195,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        .bilingual-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .bilingual-label .arabic {
-            display: block;
-            font-family: 'Cairo', sans-serif;
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-            font-weight: 400;
-        }
-
         .form-group {
             margin-bottom: 20px;
         }
@@ -326,15 +310,6 @@
             z-index: 10;
         }
 
-        .schedule-table th .arabic-header {
-            display: block;
-            font-family: 'Cairo', sans-serif;
-            font-size: 11px;
-            color: var(--text-secondary);
-            font-weight: 400;
-            margin-top: 2px;
-        }
-
         .schedule-table td {
             padding: 8px;
             border: 1px solid var(--border);
@@ -352,14 +327,6 @@
             z-index: 5;
             box-shadow: 2px 0 4px rgba(0,0,0,0.1);
         }
-
-        .schedule-table .time-cell .arabic-time {
-            display: block;
-            font-family: 'Cairo', sans-serif;
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
         
         .table-wrapper {
             overflow-x: auto;
@@ -372,13 +339,6 @@
             background: var(--bg-fixed);
             color: var(--text-secondary);
             font-size: 12px;
-        }
-
-        .schedule-table .fixed-cell .arabic-content {
-            display: block;
-            font-family: 'Cairo', sans-serif;
-            font-size: 11px;
-            margin-top: 2px;
         }
 
         .schedule-table .suggested-cell {
@@ -452,14 +412,6 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
             font-size: 16px;
-        }
-
-        .week-display .arabic {
-            font-family: 'Cairo', sans-serif;
-            font-size: 14px;
-            display: block;
-            margin-top: 4px;
-            font-weight: 400;
         }
 
         .submission-card {
@@ -563,14 +515,6 @@
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 16px;
-        }
-
-        .modal-header .arabic {
-            font-family: 'Cairo', sans-serif;
-            font-size: 15px;
-            color: var(--text-secondary);
-            display: block;
-            margin-top: 4px;
         }
 
         .modal-footer {
@@ -856,10 +800,6 @@
             .location-name {
                 font-size: 10px;
             }
-
-            .arabic-text, .arabic, .arabic-header, .arabic-time, .arabic-content {
-                font-size: 11px;
-            }
         }
 
         @media print {
@@ -994,7 +934,7 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('student')">نערימ.ות / شباب 👥</button>
+            <button class="tab active" onclick="switchTab('student')">נערימ.ות / شباب👥</button>
             <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית👩‍💼🔒</button>
             <button class="tab" onclick="switchTab('combined')">לוז כולל🧮🔒</button>
             <button class="tab" onclick="switchTab('archive')">ארכיון📦🔒</button>
@@ -1283,48 +1223,6 @@
 
     <script>
         // ==============================================
-        // TRANSLATION MAP - מיפוי תרגומים
-        // ==============================================
-        const translations = {
-            'ראשון': 'الأحد',
-            'שני': 'الإثنين',
-            'שלישי': 'الثلاثاء',
-            'רביעי': 'الأربعاء',
-            'חמישי': 'الخميس',
-            'שישי': 'الجمعة',
-            'שבת': 'السبت',
-            'שעה': 'الساعة',
-            'יום בית': 'يوم البيت',
-            'שבוע': 'أسبوع',
-            'ארוחת בוקר': 'وجبة الفطور',
-            'ארוחת צהריים': 'وجبة الغداء',
-            'ארוחת ערב': 'وجبة العشاء',
-            'לימודים': 'دراسة',
-            'לימודים / פעילות בוקר': 'دراسة / نشاط صباحي',
-            'לימודים / פעילות': 'دراسة / نشاط',
-            'פעילות': 'نشاط',
-            'פעילות בוקר': 'نشاط صباحي',
-            'מנוחה': 'استراحة',
-            'מנוחה / פעילות חופשית': 'استراحة / نشاط حر',
-            'פעילות חופשית': 'نشاط حر',
-            'ספורט': 'رياضة',
-            'ספורט / פעילות חוץ': 'رياضة / نشاط خارجي',
-            'פעילות חוץ': 'نشاط خارجي',
-            'קבוצת בית': 'مجموعة البيت',
-            'כניסה': 'دخول',
-            'פנאי': 'وقت فراغ',
-            'ארוחת צהריים / פנאי': 'وجبة الغداء / وقت فراغ',
-            'חברים': 'أصدقاء',
-            'פעילות ערב': 'نشاط مسائي',
-            'פעילות ערב / חברים': 'نشاط مسائي / أصدقاء',
-            'קורס המרץ': 'دورة الهمرتس',
-            'brunch': 'برانش',
-            'ים': 'بحر',
-            'קניון': 'مول',
-            'התנדבות': 'تطوع'
-        };
-
-        // ==============================================
         // FIREBASE CONFIGURATION
         // ==============================================
         const firebaseConfig = {
@@ -1402,39 +1300,6 @@
         let currentWeek = {};
         let studentScheduleData = {};
         let showPendingInCombined = false;
-
-        // ==============================================
-        // TRANSLATION HELPER
-        // ==============================================
-        function getArabicTranslation(hebrewText) {
-            if (!hebrewText) return '';
-            
-            // נקה רווחים מיותרים
-            const cleanText = hebrewText.trim();
-            
-            // חיפוש תרגום ישיר מלא
-            if (translations[cleanText]) {
-                return translations[cleanText];
-            }
-            
-            // חיפוש חלקי - נסה למצוא את הביטוי הארוך ביותר שמתאים
-            const sortedKeys = Object.keys(translations).sort((a, b) => b.length - a.length);
-            for (let hebrew of sortedKeys) {
-                if (cleanText.includes(hebrew)) {
-                    return cleanText.replace(hebrew, translations[hebrew]);
-                }
-            }
-            
-            // אם לא נמצא תרגום, נסה לפצל לפי / ולתרגם כל חלק
-            if (cleanText.includes('/')) {
-                const parts = cleanText.split('/').map(p => p.trim());
-                const translatedParts = parts.map(part => translations[part] || part);
-                return translatedParts.join(' / ');
-            }
-            
-            // אם כלום לא עבד, החזר את הטקסט המקורי
-            return cleanText;
-        }
 
         // ==============================================
         // COLOR PALETTE
@@ -1549,10 +1414,7 @@
 
         function updateWeekDisplay() {
             const weekEl = document.getElementById('weekDisplay');
-            weekEl.innerHTML = `
-                <div>📅 שבוע: ${currentWeek.display}</div>
-                <div class="arabic">📅 أسبوع: ${currentWeek.display}</div>
-            `;
+            weekEl.textContent = `📅 שבוע: ${currentWeek.display}`;
         }
 
         // ==============================================
@@ -1625,14 +1487,13 @@
         // ==============================================
         function renderStudentSchedule() {
             const table = document.getElementById('studentScheduleTable');
-            let html = '<thead><tr><th>שעה<br><span class="arabic-header">الساعة</span></th>';
+            let html = '<thead><tr><th>שעה</th>';
             
             scheduleStructure.days.forEach((day, idx) => {
-                const arabicDay = getArabicTranslation(day);
                 if (idx === 2) {
-                    html += `<th>${day}<br><span class="arabic-header">${arabicDay}</span><br><small style="font-weight: normal;">יום בית🛋️<br><span class="arabic-header">يوم البيت</span></small></th>`;
+                    html += `<th>${day}<br><small style="font-weight: normal;">יום בית🛋️</small></th>`;
                 } else {
-                    html += `<th>${day}<br><span class="arabic-header">${arabicDay}</span></th>`;
+                    html += `<th>${day}</th>`;
                 }
             });
             html += '</tr></thead><tbody>';
@@ -1652,8 +1513,7 @@
             });
 
             mergedTimes.forEach(({ time, slots }) => {
-                const arabicTime = time.replace(':', ':');
-                html += `<tr><td class="time-cell">${time}<br><span class="arabic-time">${arabicTime}</span></td>`;
+                html += `<tr><td class="time-cell">${time}</td>`;
                 
                 scheduleStructure.days.forEach((day, dayIndex) => {
                     let cellType = 'free';
@@ -1678,18 +1538,16 @@
                     const key = `${dayIndex}-${timeIndex}`;
                     
                     if (cellType === 'fixed') {
-                        const arabicContent = getArabicTranslation(cellContent);
-                        html += `<td class="fixed-cell">${cellContent}<br><span class="arabic-content">${arabicContent}</span></td>`;
+                        html += `<td class="fixed-cell">${cellContent}</td>`;
                     } else if (cellType === 'suggested') {
                         const value = studentScheduleData[key] || '';
-                        const arabicPlaceholder = getArabicTranslation(cellContent);
                         html += `<td class="suggested-cell">
                             <textarea 
                                    data-day="${dayIndex}" 
                                    data-time="${timeIndex}"
                                    onchange="updateStudentData(${dayIndex}, ${timeIndex}, this.value)"
                                    oninput="autoGrowTextarea(this)"
-                                   placeholder="${cellContent} / ${arabicPlaceholder}">${value}</textarea>
+                                   placeholder="${cellContent}">${value}</textarea>
                         </td>`;
                     } else {
                         const value = studentScheduleData[key] || '';
@@ -1736,10 +1594,9 @@
 
         function populateQuickCopyDaySelect() {
             const select = document.getElementById('quickCopyDay');
-            select.innerHTML = '<option value="">-- בחר יום / اختر يوماً --</option>';
+            select.innerHTML = '<option value="">-- בחר יום --</option>';
             scheduleStructure.days.forEach((day, index) => {
-                const arabicDay = getArabicTranslation(day);
-                select.innerHTML += `<option value="${index}">${day} / ${arabicDay}</option>`;
+                select.innerHTML += `<option value="${index}">${day}</option>`;
             });
         }
 
@@ -1778,7 +1635,7 @@
             const day = document.getElementById('quickCopyDay').value;
             
             if (!content || !day) {
-                showToast('יש למלא את כל השדות / املأ جميع الحقول', 'danger');
+                showToast('יש למלא את כל השדות', 'danger');
                 return;
             }
 
@@ -1788,7 +1645,7 @@
             });
 
             if (selectedTimes.length === 0) {
-                showToast('יש לבחור לפחות שעה אחת / اختر ساعة واحدة على الأقل', 'danger');
+                showToast('יש לבחור לפחות שעה אחת', 'danger');
                 return;
             }
 
@@ -1799,7 +1656,7 @@
 
             renderStudentSchedule();
             closeQuickCopyModal();
-            showToast(`הועתק ל-${selectedTimes.length} שעות / تم النسخ إلى ${selectedTimes.length} ساعات`);
+            showToast(`הועתק ל-${selectedTimes.length} שעות`);
         }
 
         // ==============================================
@@ -1809,17 +1666,17 @@
             const studentName = document.getElementById('studentName').value.trim();
             
             if (!studentName) {
-                showToast('יש להזין שם פרטי / أدخل الاسم', 'danger');
+                showToast('יש להזין שם פרטי', 'danger');
                 return;
             }
 
             if (Object.keys(studentScheduleData).length === 0) {
-                showToast('יש למלא לפחות משבצת אחת / املأ خانة واحدة على الأقل', 'danger');
+                showToast('יש למלא לפחות משבצת אחת', 'danger');
                 return;
             }
 
             if (!firebaseInitialized) {
-                showToast('Firebase לא מוגדר - لا يمكن الإرسال', 'danger');
+                showToast('Firebase לא מוגדר - לא ניתן לשלוח', 'danger');
                 return;
             }
 
@@ -1844,14 +1701,14 @@
 
             try {
                 await db.ref('submissions').push(submission);
-                showToast('הלוז נשלח בהצלחה! / تم إرسال الجدول بنجاح!');
+                showToast('הלוז נשלח בהצלחה!');
                 
                 document.getElementById('studentName').value = '';
                 studentScheduleData = {};
                 renderStudentSchedule();
             } catch (error) {
                 console.error('Error submitting schedule:', error);
-                showToast('שגיאה בשליחה / خطأ في الإرسال', 'danger');
+                showToast('שגיאה בשליחה', 'danger');
             }
         }
 
@@ -2816,9 +2673,9 @@
 
         window.addEventListener('DOMContentLoaded', initializeApp);
 
-        console.log('✅ גרסה דו-לשונית נטענה!');
-        console.log('🌈 עם דמות קווירית חמודה ברקע');
-        console.log('🇮🇱🇵🇸 עברית-ערבית');
+        console.log('✅ גרסה נקייה ללא כפילויות נטענה!');
+        console.log('🌈 עם שתי דמויות קווירי חמודות ברקע');
+        console.log('📝 הכנס בעצמך טקסט בעברית וערבית במבנה הלוז');
     </script>
 </body>
 </html>
