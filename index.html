@@ -61,6 +61,7 @@
             position: relative;
         }
 
+        /* דמות תחתונה שמאלית */
         #student-tab::before {
             content: '';
             position: fixed;
@@ -74,6 +75,32 @@
             opacity: 0.15;
             pointer-events: none;
             z-index: 0;
+        }
+
+        /* דמות עליונה ימנית */
+        #student-tab::after {
+            content: '';
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            width: 180px;
+            height: 180px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="rainbow2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:%23ff0080;stop-opacity:1" /><stop offset="16%" style="stop-color:%23ff0000;stop-opacity:1" /><stop offset="33%" style="stop-color:%23ffed00;stop-opacity:1" /><stop offset="50%" style="stop-color:%2300ff00;stop-opacity:1" /><stop offset="66%" style="stop-color:%230099ff;stop-opacity:1" /><stop offset="83%" style="stop-color:%230000ff;stop-opacity:1" /><stop offset="100%" style="stop-color:%238b00ff;stop-opacity:1" /></linearGradient></defs><circle cx="100" cy="75" r="38" fill="%23ffd4a3"/><circle cx="88" cy="70" r="4" fill="%23222"/><circle cx="112" cy="70" r="4" fill="%23222"/><path d="M 88 82 Q 100 88 112 82" stroke="%23ff1493" stroke-width="2.5" fill="none" stroke-linecap="round"/><ellipse cx="100" cy="125" rx="42" ry="50" fill="url(%23rainbow2)"/><rect x="72" y="170" width="14" height="18" fill="%23ffd4a3" rx="3"/><rect x="114" y="170" width="14" height="18" fill="%23ffd4a3" rx="3"/><path d="M 70 65 Q 60 55 55 58 Q 52 62 60 68 L 75 70" fill="%235d4037"/><path d="M 130 65 Q 140 55 145 58 Q 148 62 140 68 L 125 70" fill="%235d4037"/><circle cx="75" cy="85" r="9" fill="%23ffb6d9" opacity="0.7"/><circle cx="125" cy="85" r="9" fill="%23ffb6d9" opacity="0.7"/><path d="M 95 60 Q 100 50 105 60" stroke="%235d4037" stroke-width="1.5" fill="none"/><circle cx="100" cy="50" r="3" fill="%23ff69b4"/><path d="M 85 130 Q 88 140 92 145" stroke="%23fff" stroke-width="2" fill="none" opacity="0.4"/><path d="M 108 130 Q 112 140 115 145" stroke="%23fff" stroke-width="2" fill="none" opacity="0.4"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatCharacter 6s ease-in-out infinite;
+        }
+
+        @keyframes floatCharacter {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
         }
 
         .container {
@@ -762,6 +789,13 @@
                 left: 10px;
             }
 
+            #student-tab::after {
+                width: 100px;
+                height: 100px;
+                top: 140px;
+                right: 10px;
+            }
+
             .schedule-table {
                 font-size: 10px;
                 display: table;
@@ -943,6 +977,10 @@
             #student-tab::before {
                 display: none !important;
             }
+
+            #student-tab::after {
+                display: none !important;
+            }
         }
     </style>
 
@@ -956,7 +994,7 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('student')">נערימ.ות / شباب 👥</button>
+            <button class="tab active" onclick="switchTab('student')">نערימ.ות / شباب 👥</button>
             <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית👩‍💼🔒</button>
             <button class="tab" onclick="switchTab('combined')">לוז כולל🧮🔒</button>
             <button class="tab" onclick="switchTab('archive')">ארכיון📦🔒</button>
@@ -1262,13 +1300,28 @@
             'ארוחת צהריים': 'وجبة الغداء',
             'ארוחת ערב': 'وجبة العشاء',
             'לימודים': 'دراسة',
+            'לימודים / פעילות בוקר': 'دراسة / نشاط صباحي',
+            'לימודים / פעילות': 'دراسة / نشاط',
             'פעילות': 'نشاط',
+            'פעילות בוקר': 'نشاط صباحي',
             'מנוחה': 'استراحة',
+            'מנוחה / פעילות חופשית': 'استراحة / نشاط حر',
+            'פעילות חופשית': 'نشاط حر',
             'ספורט': 'رياضة',
+            'ספורט / פעילות חוץ': 'رياضة / نشاط خارجي',
+            'פעילות חוץ': 'نشاط خارجي',
             'קבוצת בית': 'مجموعة البيت',
             'כניסה': 'دخول',
             'פנאי': 'وقت فراغ',
-            'חברים': 'أصدقاء'
+            'ארוחת צהריים / פנאי': 'وجبة الغداء / وقت فراغ',
+            'חברים': 'أصدقاء',
+            'פעילות ערב': 'نشاط مسائي',
+            'פעילות ערב / חברים': 'نشاط مسائي / أصدقاء',
+            'קורס המרץ': 'دورة الهمرتس',
+            'brunch': 'برانش',
+            'ים': 'بحر',
+            'קניון': 'مول',
+            'התנדבות': 'تطوع'
         };
 
         // ==============================================
@@ -1356,19 +1409,31 @@
         function getArabicTranslation(hebrewText) {
             if (!hebrewText) return '';
             
-            // חיפוש תרגום ישיר
-            if (translations[hebrewText]) {
-                return translations[hebrewText];
+            // נקה רווחים מיותרים
+            const cleanText = hebrewText.trim();
+            
+            // חיפוש תרגום ישיר מלא
+            if (translations[cleanText]) {
+                return translations[cleanText];
             }
             
-            // חיפוש חלקי במילים
-            for (let [hebrew, arabic] of Object.entries(translations)) {
-                if (hebrewText.includes(hebrew)) {
-                    return hebrewText.split(' ').map(word => translations[word] || word).join(' ');
+            // חיפוש חלקי - נסה למצוא את הביטוי הארוך ביותר שמתאים
+            const sortedKeys = Object.keys(translations).sort((a, b) => b.length - a.length);
+            for (let hebrew of sortedKeys) {
+                if (cleanText.includes(hebrew)) {
+                    return cleanText.replace(hebrew, translations[hebrew]);
                 }
             }
             
-            return hebrewText;
+            // אם לא נמצא תרגום, נסה לפצל לפי / ולתרגם כל חלק
+            if (cleanText.includes('/')) {
+                const parts = cleanText.split('/').map(p => p.trim());
+                const translatedParts = parts.map(part => translations[part] || part);
+                return translatedParts.join(' / ');
+            }
+            
+            // אם כלום לא עבד, החזר את הטקסט המקורי
+            return cleanText;
         }
 
         // ==============================================
