@@ -243,6 +243,9 @@
 
         .schedule-table thead {
             background: var(--bg-fixed);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .schedule-table th {
@@ -253,6 +256,7 @@
             position: sticky;
             top: 0;
             background: var(--bg-fixed);
+            z-index: 10;
         }
 
         .schedule-table td {
@@ -512,65 +516,7 @@
             color: white;
         }
         
-        .student-tag:nth-child(15n+1) {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .student-tag:nth-child(15n+2) {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
-        .student-tag:nth-child(15n+3) {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        
-        .student-tag:nth-child(15n+4) {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-        
-        .student-tag:nth-child(15n+5) {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-        
-        .student-tag:nth-child(15n+6) {
-            background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
-        }
-        
-        .student-tag:nth-child(15n+7) {
-            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
-        }
-        
-        .student-tag:nth-child(15n+8) {
-            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
-        }
-        
-        .student-tag:nth-child(15n+9) {
-            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
-        }
-        
-        .student-tag:nth-child(15n+10) {
-            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-        }
-        
-        .student-tag:nth-child(15n+11) {
-            background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
-        }
-        
-        .student-tag:nth-child(15n+12) {
-            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-        }
-        
-        .student-tag:nth-child(15n+13) {
-            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
-        }
-        
-        .student-tag:nth-child(15n+14) {
-            background: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
-        }
-        
-        .student-tag:nth-child(15n+15) {
-            background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
-        }
+        /* הצבעים נקבעים דינמית ב-JS לפי hash של השם */
 
         .location-group {
             margin-bottom: 8px;
@@ -755,9 +701,21 @@
                 display: none !important;
             }
             
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            
+            html, body {
+                direction: rtl !important;
+                background: white !important;
+                padding: 0;
+                margin: 0;
+            }
+            
             .header {
-                padding: 20px;
-                margin-bottom: 10px;
+                padding: 10px;
+                margin-bottom: 5px;
                 background: white !important;
                 color: black !important;
             }
@@ -765,6 +723,7 @@
             .header h1 {
                 color: black !important;
                 text-shadow: none !important;
+                font-size: 18px;
             }
             
             .card {
@@ -772,29 +731,40 @@
                 border: 2px solid #000;
                 page-break-inside: avoid;
                 background: white !important;
+                padding: 10px;
             }
             
             .schedule-table {
-                font-size: 10px;
+                font-size: 8px;
+                width: 100%;
+                transform: scale(0.95);
+                transform-origin: top right;
             }
             
             .schedule-table th, .schedule-table td {
                 border: 1px solid #000 !important;
-                padding: 4px !important;
-            }
-            
-            body {
-                background: white !important;
-                padding: 10px;
+                padding: 2px !important;
+                direction: rtl !important;
+                text-align: center !important;
             }
             
             .submission-card {
                 page-break-inside: avoid;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+                page-break-after: always;
+            }
+            
+            .submission-card:last-child {
+                page-break-after: avoid;
             }
             
             .toast {
                 display: none !important;
+            }
+            
+            .student-tag {
+                font-size: 8px;
+                padding: 2px 4px;
             }
         }
     </style>
@@ -855,6 +825,18 @@
                 </div>
                 
                 <div id="submissionsList"></div>
+            </div>
+        </div>
+
+        
+        <!-- TAB: Archive -->
+        <div id="archive-tab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">📦 ארכיון</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    לוזים שהועברו לארכיון לא מופיעים בלוז הכולל.
+                </p>
+                <div id="archiveList"></div>
             </div>
         </div>
 
@@ -1198,7 +1180,7 @@
             console.log('🔄 Switching to tab:', tabName);
             
             // Check password for coordinator, combined, and editor tabs
-            if (['coordinator', 'combined', 'editor'].includes(tabName)) {
+            if (['coordinator', 'archive', 'combined', 'editor'].includes(tabName)) {
                 const password = prompt('הכנס סיסמה:');
                 
                 if (!password) {
@@ -1276,6 +1258,11 @@
                     console.error('❌ Firebase not initialized');
                     document.getElementById('combinedViewContent').innerHTML = 
                         '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר. אנא רענן את הדף.</p>';
+                }
+            } else if (tabName === 'archive') {
+                console.log('📦 Loading archive');
+                if (firebaseInitialized) {
+                    loadArchiveTab();
                 }
             } else if (tabName === 'editor') {
                 console.log('⚙️ Loading structure editor');
@@ -2291,6 +2278,7 @@
 
             html += '</tbody></table></div>';
             container.innerHTML = html;
+            applyDynamicColors();
         }
 
         // ==============================================
@@ -2657,6 +2645,133 @@ END:VEVENT
             element.style.height = element.scrollHeight + 'px';
         }
 
+        
+        // צבעים דינמיים לפי hash של השם
+        const COLORS = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%)',
+            'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
+            'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)',
+            'linear-gradient(135deg, #fdcb6e 0%, #e17055 100%)',
+            'linear-gradient(135deg, #00b894 0%, #00cec9 100%)',
+            'linear-gradient(135deg, #0984e3 0%, #74b9ff 100%)',
+            'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)',
+            'linear-gradient(135deg, #e17055 0%, #d63031 100%)',
+            'linear-gradient(135deg, #00b894 0%, #55efc4 100%)',
+            'linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%)'
+        ];
+
+        function getColorForName(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = ((hash << 5) - hash) + name.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return COLORS[Math.abs(hash) % COLORS.length];
+        }
+
+        function applyDynamicColors() {
+            document.querySelectorAll('.student-tag').forEach(tag => {
+                const name = tag.textContent.trim();
+                tag.style.background = getColorForName(name);
+            });
+        }
+
+        // טעינת ארכיון
+        async function loadArchiveTab() {
+            if (!firebaseInitialized) {
+                document.getElementById('archiveList').innerHTML = '<p style="text-align: center; color: red;">⚠️ Firebase לא מחובר</p>';
+                return;
+            }
+            try {
+                const snapshot = await db.ref('archive').once('value');
+                const archived = [];
+                snapshot.forEach(childSnapshot => {
+                    archived.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                archived.sort((a, b) => new Date(b.archivedAt || b.submittedAt) - new Date(a.archivedAt || a.submittedAt));
+                const weekGroups = {};
+                archived.forEach(sub => {
+                    if (!weekGroups[sub.weekDisplay]) {
+                        weekGroups[sub.weekDisplay] = [];
+                    }
+                    weekGroups[sub.weekDisplay].push(sub);
+                });
+                renderArchiveList(weekGroups);
+            } catch (error) {
+                console.error('Error loading archive:', error);
+                document.getElementById('archiveList').innerHTML = '<p style="text-align: center; color: red;">⚠️ שגיאה</p>';
+            }
+        }
+
+        function renderArchiveList(weekGroups) {
+            const container = document.getElementById('archiveList');
+            if (Object.keys(weekGroups).length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">📦 הארכיון ריק</p>';
+                return;
+            }
+            let html = '';
+            Object.keys(weekGroups).forEach(weekDisplay => {
+                html += `<div class="week-section"><div class="week-header">📦 ${weekDisplay}</div>`;
+                weekGroups[weekDisplay].forEach(submission => {
+                    const date = new Date(submission.archivedAt || submission.submittedAt);
+                    const dateStr = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                    html += `
+                        <div class="submission-card" style="opacity: 0.85; border: 2px dashed #9ca3af;">
+                            <div class="submission-header">
+                                <div>
+                                    <h3>📦 ${submission.studentName}</h3>
+                                    <div class="submission-date">בארכיון: ${dateStr}</div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-primary btn-sm" onclick="restoreFromArchive('${submission.id}')">📤 החזר</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteFromArchive('${submission.id}')">🗑️ מחק</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        async function restoreFromArchive(submissionId) {
+            if (!firebaseInitialized) return;
+            try {
+                const snapshot = await db.ref(`archive/${submissionId}`).once('value');
+                const data = snapshot.val();
+                if (!data) return;
+                const { archivedAt, ...submissionData } = data;
+                await db.ref(`submissions/${submissionId}`).set(submissionData);
+                await db.ref(`archive/${submissionId}`).remove();
+                showToast('✅ הוחזר מהארכיון');
+                loadArchiveTab();
+            } catch (error) {
+                showToast('שגיאה', 'danger');
+            }
+        }
+
+        async function deleteFromArchive(submissionId) {
+            if (!confirm('למחוק לצמיתות?')) return;
+            if (!firebaseInitialized) return;
+            try {
+                await db.ref(`archive/${submissionId}`).remove();
+                showToast('נמחק');
+                loadArchiveTab();
+            } catch (error) {
+                showToast('שגיאה', 'danger');
+            }
+        }
+
+        
         console.log('✅ גרסה 2.0 נטענה בהצלחה!');
 
         
