@@ -267,6 +267,10 @@
             background: var(--bg-fixed);
             font-weight: 500;
             white-space: nowrap;
+            position: sticky;
+            right: 0;
+            z-index: 5;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
         }
 
         .schedule-table .fixed-cell {
@@ -293,7 +297,8 @@
             font-size: 10px;
         }
 
-        .schedule-table .suggested-cell input {
+        .schedule-table .suggested-cell input,
+        .schedule-table .suggested-cell textarea {
             color: var(--text-primary);
             font-weight: 500;
             white-space: normal;
@@ -309,19 +314,31 @@
             background: var(--bg-hover);
         }
 
-        .schedule-table input {
+        .schedule-table input,
+        .schedule-table textarea {
             width: 100%;
+            min-width: 80px;
             border: none;
             background: transparent;
             text-align: center;
             font-family: 'Heebo', sans-serif;
             font-size: 13px;
             padding: 4px;
+            resize: vertical;
+            min-height: 30px;
+            overflow: hidden;
         }
 
-        .schedule-table input:focus {
-            outline: 1px solid var(--primary);
+        .schedule-table input:focus,
+        .schedule-table textarea:focus {
+            outline: 2px solid var(--primary);
             border-radius: 4px;
+            background: #ffffcc;
+        }
+        
+        /* Auto-grow textarea */
+        .schedule-table textarea {
+            overflow-y: hidden;
         }
 
         .week-display {
@@ -492,31 +509,67 @@
             margin: 2px;
             font-weight: 600;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            color: white;
         }
         
-        .student-tag:nth-child(5n+1) {
+        .student-tag:nth-child(15n+1) {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
         }
         
-        .student-tag:nth-child(5n+2) {
+        .student-tag:nth-child(15n+2) {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
         }
         
-        .student-tag:nth-child(5n+3) {
+        .student-tag:nth-child(15n+3) {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
         }
         
-        .student-tag:nth-child(5n+4) {
+        .student-tag:nth-child(15n+4) {
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            color: white;
         }
         
-        .student-tag:nth-child(5n+5) {
+        .student-tag:nth-child(15n+5) {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            color: white;
+        }
+        
+        .student-tag:nth-child(15n+6) {
+            background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+        }
+        
+        .student-tag:nth-child(15n+7) {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        }
+        
+        .student-tag:nth-child(15n+8) {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        }
+        
+        .student-tag:nth-child(15n+9) {
+            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+        }
+        
+        .student-tag:nth-child(15n+10) {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+        }
+        
+        .student-tag:nth-child(15n+11) {
+            background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
+        }
+        
+        .student-tag:nth-child(15n+12) {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        }
+        
+        .student-tag:nth-child(15n+13) {
+            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        }
+        
+        .student-tag:nth-child(15n+14) {
+            background: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
+        }
+        
+        .student-tag:nth-child(15n+15) {
+            background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
         }
 
         .location-group {
@@ -693,20 +746,72 @@
             font-family: 'Heebo', sans-serif;
             font-size: 13px;
         }
+
+        /* הדפסה */
+        @media print {
+            .tabs, .combined-view-controls, .entry-controls, .cell-actions, 
+            .btn:not(.print-btn), .header p, .legend, .submission-header button,
+            .structure-editor-controls, #pendingStatusIndicator {
+                display: none !important;
+            }
+            
+            .header {
+                padding: 20px;
+                margin-bottom: 10px;
+                background: white !important;
+                color: black !important;
+            }
+            
+            .header h1 {
+                color: black !important;
+                text-shadow: none !important;
+            }
+            
+            .card {
+                box-shadow: none;
+                border: 2px solid #000;
+                page-break-inside: avoid;
+                background: white !important;
+            }
+            
+            .schedule-table {
+                font-size: 10px;
+            }
+            
+            .schedule-table th, .schedule-table td {
+                border: 1px solid #000 !important;
+                padding: 4px !important;
+            }
+            
+            body {
+                background: white !important;
+                padding: 10px;
+            }
+            
+            .submission-card {
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+            }
+            
+            .toast {
+                display: none !important;
+            }
+        }
     </style>
+
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📅 מערכת לוז דיגיטלית - בית דרור🏳️‍🌈</h1>
-            <p>אנא תמלאו את הלוז השבועי שלכם פעם אחת ותלחצו"שלח לאישור" מקווים שיהיה לכם שבוע מצוין😊</p>
+            <p>מילוי ואישור לוזים שבועיים</p>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('student')">נערימ.ות</button>
-            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית🔒</button>
-            <button class="tab" onclick="switchTab('combined')">לוז כולל🔒</button>
-            <button class="tab" onclick="switchTab('editor')">עריכת לוז⚙️🔒</button>
+            <button class="tab active" onclick="switchTab('student')">נער</button>
+            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית</button>
+            <button class="tab" onclick="switchTab('combined')">לוז כולל</button>
+            <button class="tab" onclick="switchTab('editor')">⚙️ עריכת לוז</button>
         </div>
 
         <!-- TAB 1: Student View -->
@@ -765,9 +870,15 @@
                             <option value="">-- בחר שבוע --</option>
                         </select>
                     </div>
-                    <div style="display: flex; align-items: flex-end; gap: 8px;">
+                    <div style="display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap;">
                         <button class="btn btn-secondary" onclick="togglePendingInCombined()">
                             <span id="pendingToggleText">👁️ הצג לא מאושרים</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="exportToGoogleCalendar()">
+                            📅 ייצא ליומן Google
+                        </button>
+                        <button class="btn btn-secondary" onclick="printCombinedSchedule()">
+                            🖨️ הדפס
                         </button>
                     </div>
                 </div>
@@ -821,7 +932,7 @@
                 
                 <div class="form-group">
                     <label>מה תעשה?</label>
-                    <input type="text" id="quickCopyContent" placeholder="לדוגמה: ים, התנדבות, לימודים">
+                    <input type="text" id="quickCopyContent" placeholder="לדוגמה: ים, קניון, בית">
                 </div>
 
                 <div class="form-group">
@@ -1245,22 +1356,22 @@
                         const value = studentScheduleData[key] || '';
                         const placeholder = cellContent || 'הצעה...';
                         html += `<td class="suggested-cell">
-                            <input type="text" 
+                            <textarea 
                                    data-day="${dayIndex}" 
                                    data-time="${timeIndex}"
-                                   value="${value}"
                                    onchange="updateStudentData(${dayIndex}, ${timeIndex}, this.value)"
-                                   placeholder="${placeholder}">
+                                   oninput="autoGrowTextarea(this)"
+                                   placeholder="${placeholder}">${value}</textarea>
                         </td>`;
                     } else {
                         const value = studentScheduleData[key] || '';
                         html += `<td class="free-cell">
-                            <input type="text" 
+                            <textarea 
                                    data-day="${dayIndex}" 
                                    data-time="${timeIndex}"
-                                   value="${value}"
                                    onchange="updateStudentData(${dayIndex}, ${timeIndex}, this.value)"
-                                   placeholder="...">
+                                   oninput="autoGrowTextarea(this)"
+                                   placeholder="...">${value}</textarea>
                         </td>`;
                     }
                 });
@@ -1455,7 +1566,7 @@
                 if (weekSelect) {
                     const currentSelection = weekSelect.value;
                     weekSelect.innerHTML = '<option value="">-- כל השבועות --</option>';
-                    Array.from(weeks).sort().reverse().forEach(week => {
+                    sortWeeksByDate(Array.from(weeks)).forEach(week => {
                         const selected = week === currentSelection ? 'selected' : '';
                         weekSelect.innerHTML += `<option value="${week}" ${selected}>${week}</option>`;
                     });
@@ -1539,7 +1650,7 @@
             }
             
             let html = `
-                <div class="submission-card" style="${isArchived ? 'opacity: 0.6; border: 2px dashed #9ca3af;' : ''}">
+                <div class="submission-card" data-submission-id="${submission.id}" style="${isArchived ? 'opacity: 0.6; border: 2px dashed #9ca3af;' : ''}">
                     <div class="submission-header">
                         <div>
                             <h3>${submission.studentName} ${isArchived ? '📦 (בארכיון)' : ''}</h3>
@@ -1547,6 +1658,7 @@
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-secondary btn-sm" onclick="renameStudent('${submission.id}', '${submission.studentName}')">✏️ שנה שם</button>
+                            <button class="btn btn-secondary btn-sm" onclick="printSingleSchedule('${submission.id}')">🖨️ הדפס</button>
                             <button class="btn btn-secondary btn-sm" onclick="changeSubmissionWeek('${submission.id}', '${submission.weekDisplay}')">📅 שנה תאריכים</button>
                             ${!isArchived ? 
                                 `<button class="btn btn-secondary btn-sm" onclick="archiveSubmission('${submission.id}')">📦 ארכיון</button>` : 
@@ -2019,7 +2131,7 @@
                 
                 select.innerHTML = '<option value="">-- בחר שבוע --</option>';
                 
-                Array.from(weeks).sort().reverse().forEach(week => {
+                sortWeeksByDate(Array.from(weeks)).forEach(week => {
                     select.innerHTML += `<option value="${week}">${week}</option>`;
                 });
             } catch (error) {
@@ -2232,7 +2344,7 @@
                             </div>
                         ` : timeSlot.type === 'suggested' ? `
                             <div class="form-group">
-                                <label>טקסט הנחיה (מה הנער/ה אמורים לכתוב)</label>
+                                <label>טקסט הנחיה (מה הנער אמור לכתוב)</label>
                                 <input type="text" value="${timeSlot.content || ''}" 
                                        onchange="updateTimeSlot(${index}, 'content', this.value)"
                                        placeholder="לדוגמה: לימודים / פעילות בוקר"
@@ -2392,6 +2504,162 @@
         // ==============================================
         // INITIALIZATION ON LOAD
         // ==============================================
+        
+        // ========================================
+        // גרסה 2.0 - תכונות חדשות  
+        // ========================================
+
+        // 1. מיון שבועות מהחדש לישן
+        function sortWeeksByDate(weeksArray) {
+            return weeksArray.sort((a, b) => {
+                try {
+                    const [startA] = a.split(' - ');
+                    const [startB] = b.split(' - ');
+                    const [dayA, monthA, yearA] = startA.split('/').map(Number);
+                    const [dayB, monthB, yearB] = startB.split('/').map(Number);
+                    const dateA = new Date(yearA, monthA - 1, dayA);
+                    const dateB = new Date(yearB, monthB - 1, dayB);
+                    return dateB - dateA;
+                } catch (e) {
+                    return 0;
+                }
+            });
+        }
+
+        // 2. ארכיון אמיתי
+        archiveSubmission = async function(submissionId) {
+            if (!confirm('האם להעביר לוז זה לארכיון?\nהלוז יוסר מהרשימה ולא יופיע בלוז כולל.')) return;
+            if (!firebaseInitialized) return;
+            try {
+                const snapshot = await db.ref(`submissions/${submissionId}`).once('value');
+                const data = snapshot.val();
+                if (!data) {
+                    showToast('לוז לא נמצא', 'danger');
+                    return;
+                }
+                await db.ref(`archive/${submissionId}`).set({
+                    ...data,
+                    archivedAt: new Date().toISOString()
+                });
+                await db.ref(`submissions/${submissionId}`).remove();
+                showToast('✅ הועבר לארכיון');
+                loadSubmissions();
+            } catch (error) {
+                console.error('Error archiving:', error);
+                showToast('שגיאה בהעברה לארכיון', 'danger');
+            }
+        };
+
+        // 3. ייצוא ליומן Google (ICS)
+        async function exportToGoogleCalendar() {
+            const selectedWeek = document.getElementById('combinedWeekSelect').value;
+            if (!selectedWeek) {
+                showToast('אנא בחר שבוע תחילה', 'danger');
+                return;
+            }
+            try {
+                const snapshot = await db.ref('submissions').once('value');
+                const events = [];
+                snapshot.forEach(childSnapshot => {
+                    const submission = childSnapshot.val();
+                    if (submission.weekDisplay === selectedWeek && submission.scheduleData) {
+                        submission.scheduleData.forEach(entry => {
+                            if (entry.status === 'approved') {
+                                events.push({
+                                    studentName: submission.studentName,
+                                    day: entry.day,
+                                    time: entry.time,
+                                    content: entry.content,
+                                    weekStart: submission.weekStart
+                                });
+                            }
+                        });
+                    }
+                });
+                if (events.length === 0) {
+                    showToast('אין אירועים מאושרים לייצוא', 'danger');
+                    return;
+                }
+                
+                let icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//בית דרור//Hostel Schedule//HE
+CALNAME:לוז שבועי - ${selectedWeek}
+X-WR-CALNAME:לוז שבועי - ${selectedWeek}
+X-WR-TIMEZONE:Asia/Jerusalem
+`;
+                events.forEach((event, index) => {
+                    const weekStartDate = new Date(event.weekStart);
+                    const eventDate = new Date(weekStartDate);
+                    eventDate.setDate(weekStartDate.getDate() + event.day);
+                    const timeSlot = scheduleStructure.times[event.time];
+                    if (!timeSlot) return;
+                    const [hours, minutes] = timeSlot.time.split(':');
+                    eventDate.setHours(parseInt(hours), parseInt(minutes), 0);
+                    const endDate = new Date(eventDate);
+                    endDate.setHours(eventDate.getHours() + 1);
+                    const formatDateForICS = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                    icsContent += `BEGIN:VEVENT
+UID:${Date.now()}-${index}@beit-dror.hostel
+DTSTAMP:${formatDateForICS(new Date())}
+DTSTART:${formatDateForICS(eventDate)}
+DTEND:${formatDateForICS(endDate)}
+SUMMARY:${event.content} - ${event.studentName}
+DESCRIPTION:פעילות: ${event.content}\\nנער/ה: ${event.studentName}
+LOCATION:בית דרור
+STATUS:CONFIRMED
+END:VEVENT
+`;
+                });
+                icsContent += 'END:VCALENDAR';
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `לוז-${selectedWeek.replace(/\//g, '-')}.ics`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast(`✅ ${events.length} אירועים יוצאו! פתח את הקובץ ביומן Google`);
+            } catch (error) {
+                console.error('Error exporting:', error);
+                showToast('שגיאה בייצוא', 'danger');
+            }
+        }
+
+        // 4. הדפסת לוז בודד
+        function printSingleSchedule(submissionId) {
+            const card = document.querySelector(`[data-submission-id="${submissionId}"]`);
+            if (!card) {
+                window.print();
+                return;
+            }
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>הדפסת לוז</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write(document.querySelector('style').innerHTML);
+            printWindow.document.write('body { padding: 20px; }');
+            printWindow.document.write('.btn, .cell-actions { display: none !important; }');
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write(card.outerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // 5. הדפסת לוז כולל
+        function printCombinedSchedule() {
+            window.print();
+        }
+
+        // 6. Auto-grow textarea
+        function autoGrowTextarea(element) {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+        }
+
+        console.log('✅ גרסה 2.0 נטענה בהצלחה!');
+
+        
         window.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
