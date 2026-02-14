@@ -232,8 +232,8 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            display: block;
             overflow-x: auto;
+            display: table;
         }
 
         .schedule-table thead {
@@ -267,6 +267,14 @@
             right: 0;
             z-index: 5;
             box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        }
+        
+        /* wrapper לטבלה עם גלילה */
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
         }
 
         .schedule-table .fixed-cell {
@@ -660,69 +668,41 @@
             font-size: 13px;
         }
 
-        /* תיקון sticky headers למובייל */
+        /* תיקון למובייל */
         @media (max-width: 768px) {
             .schedule-table {
-                font-size: 11px;
-                display: block;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                position: relative;
-            }
-
-            /* ראש הטבלה sticky */
-            .schedule-table thead {
-                position: sticky;
-                top: 0;
-                z-index: 30;
-                background: var(--bg-fixed);
-            }
-
-            .schedule-table thead tr {
+                font-size: 10px;
                 display: table;
-                width: 100%;
-                table-layout: fixed;
             }
-
-            .schedule-table tbody {
-                display: block;
-                overflow-y: auto;
-                overflow-x: auto;
-            }
-
-            .schedule-table tbody tr {
-                display: table;
-                width: 100%;
-                table-layout: fixed;
-            }
-
+            
             .schedule-table th {
-                padding: 10px 4px;
-                text-align: center;
-                font-weight: 600;
-                border: 1px solid var(--border);
-                background: var(--bg-fixed) !important;
+                padding: 8px 4px;
                 position: sticky;
                 top: 0;
-                z-index: 30;
+                z-index: 15;
+                background: var(--bg-fixed) !important;
+            }
+            
+            .schedule-table td {
+                padding: 6px 3px;
             }
 
-            /* עמודת השעות sticky */
             .schedule-table .time-cell {
                 position: sticky;
                 right: 0;
-                z-index: 20;
+                z-index: 10;
                 background: var(--bg-fixed) !important;
-                box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+                box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+                padding: 6px 3px;
             }
-
-            .schedule-table th,
-            .schedule-table td {
-                padding: 8px 4px;
+            
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             .tabs {
-                overflow-x: scroll;
+                overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
 
@@ -734,13 +714,21 @@
                 grid-template-columns: 1fr;
             }
 
-            /* תיקון לכרטיסיות הכפתורים */
             .combined-view-controls {
                 flex-direction: column;
             }
 
             .combined-view-controls > * {
                 width: 100%;
+            }
+            
+            .student-tag {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            
+            .location-name {
+                font-size: 10px;
             }
         }
 
@@ -891,7 +879,7 @@
                     📋 העתק לשעות נוספות
                 </button>
 
-                <div style="overflow-x: auto;">
+                <div class="table-wrapper">
                     <table class="schedule-table" id="studentScheduleTable"></table>
                 </div>
 
@@ -1720,7 +1708,7 @@
                             <button class="btn btn-secondary btn-sm" onclick="archiveSubmission('${submission.id}')">📦 ארכיון</button>
                         </div>
                     </div>
-                    <div style="overflow-x: auto;">
+                    <div class="table-wrapper">
                         <table class="schedule-table">
                             <thead>
                                 <tr>
@@ -2348,7 +2336,7 @@
                 });
             });
 
-            let html = '<div style="overflow-x: auto;"><table class="schedule-table"><thead><tr><th>שעה</th>';
+            let html = '<div class="table-wrapper"><table class="schedule-table"><thead><tr><th>שעה</th>';
             scheduleStructure.days.forEach((day, idx) => {
                 if (idx === 2) {
                     html += `<th>${day}<br><small style="font-weight: normal;">יום בית🛋️</small></th>`;
@@ -2756,10 +2744,10 @@ END:VEVENT
         // ==============================================
         window.addEventListener('DOMContentLoaded', initializeApp);
 
-        console.log('✅ גרסה 2.3 ULTIMATE נטענה! (15/02/2026)');
-        console.log('🎨 מערכת צבעים ייחודית - ללא כפילויות');
-        console.log('📱 תיקון sticky headers בטלפון');
-        console.log('🖨️ הדפסה מתוקנת - רק לוז כולל');
+        console.log('✅ גרסה 2.4 MOBILE FIX נטענה! (15/02/2026)');
+        console.log('📱 תיקון תצוגת טבלאות בטלפון');
+        console.log('🎨 צבעים ייחודיים ללא כפילויות');
+        console.log('🖨️ הדפסה מתוקנת');
     </script>
 </body>
 </html>
