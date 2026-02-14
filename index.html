@@ -667,35 +667,63 @@
                 display: block;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                position: relative;
             }
 
+            /* ראש הטבלה sticky */
             .schedule-table thead {
                 position: sticky;
                 top: 0;
-                z-index: 20;
+                z-index: 30;
+                background: var(--bg-fixed);
+            }
+
+            .schedule-table thead tr {
+                display: table;
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            .schedule-table tbody {
+                display: block;
+                overflow-y: auto;
+                overflow-x: auto;
+            }
+
+            .schedule-table tbody tr {
+                display: table;
+                width: 100%;
+                table-layout: fixed;
             }
 
             .schedule-table th {
+                padding: 10px 4px;
+                text-align: center;
+                font-weight: 600;
+                border: 1px solid var(--border);
+                background: var(--bg-fixed) !important;
                 position: sticky;
                 top: 0;
-                z-index: 20;
-                background: var(--bg-fixed);
+                z-index: 30;
             }
 
+            /* עמודת השעות sticky */
             .schedule-table .time-cell {
                 position: sticky;
                 right: 0;
-                z-index: 15;
-                background: var(--bg-fixed);
+                z-index: 20;
+                background: var(--bg-fixed) !important;
+                box-shadow: 2px 0 4px rgba(0,0,0,0.1);
             }
 
             .schedule-table th,
             .schedule-table td {
-                padding: 6px 4px;
+                padding: 8px 4px;
             }
 
             .tabs {
                 overflow-x: scroll;
+                -webkit-overflow-scrolling: touch;
             }
 
             .modal-content {
@@ -705,12 +733,26 @@
             .structure-editor-controls {
                 grid-template-columns: 1fr;
             }
+
+            /* תיקון לכרטיסיות הכפתורים */
+            .combined-view-controls {
+                flex-direction: column;
+            }
+
+            .combined-view-controls > * {
+                width: 100%;
+            }
         }
 
         /* הדפסה */
         @media print {
+            /* הסתר הכל חוץ מלוז כולל */
+            body > .container > *:not(.header):not(#combined-tab) {
+                display: none !important;
+            }
+            
             .tabs, .combined-view-controls, .entry-controls, .cell-actions, 
-            .btn:not(.print-btn), .header p, .legend, .submission-header button,
+            .btn, .header p, .legend, .submission-header button,
             .structure-editor-controls, #pendingStatusIndicator {
                 display: none !important;
             }
@@ -727,11 +769,16 @@
                 margin: 0;
             }
             
+            .container {
+                max-width: 100% !important;
+            }
+            
             .header {
                 padding: 10px;
                 margin-bottom: 5px;
                 background: white !important;
                 color: black !important;
+                box-shadow: none !important;
             }
             
             .header h1 {
@@ -742,43 +789,72 @@
             
             .card {
                 box-shadow: none;
-                border: 2px solid #000;
+                border: 1px solid #000;
                 page-break-inside: avoid;
                 background: white !important;
                 padding: 10px;
+                margin: 0;
+            }
+            
+            #combined-tab {
+                display: block !important;
+            }
+            
+            #combined-tab .card {
+                padding: 10px;
+            }
+            
+            #combined-tab h2 {
+                font-size: 16px;
+                margin-bottom: 10px;
             }
             
             .schedule-table {
-                font-size: 8px;
+                font-size: 9px;
                 width: 100%;
-                transform: scale(0.95);
-                transform-origin: top right;
+                page-break-inside: avoid;
             }
             
             .schedule-table th, .schedule-table td {
                 border: 1px solid #000 !important;
-                padding: 2px !important;
+                padding: 3px 2px !important;
                 direction: rtl !important;
                 text-align: center !important;
             }
             
-            .submission-card {
-                page-break-inside: avoid;
-                margin-bottom: 10px;
-                page-break-after: always;
+            .schedule-table thead th {
+                background: #f0f0f0 !important;
+                font-weight: bold;
             }
             
-            .submission-card:last-child {
-                page-break-after: avoid;
+            .schedule-table .time-cell {
+                background: #f0f0f0 !important;
+                font-weight: bold;
+            }
+            
+            .schedule-table .fixed-cell {
+                background: #e8e8e8 !important;
+            }
+            
+            .student-tag {
+                font-size: 7px;
+                padding: 1px 3px;
+                margin: 1px;
+                display: inline-block;
+            }
+            
+            .location-group {
+                margin-bottom: 4px;
+            }
+            
+            .location-name {
+                font-size: 8px;
+                font-weight: bold;
+                margin-bottom: 2px;
             }
             
             .toast {
                 display: none !important;
-            }
-            
-            .student-tag {
-                font-size: 8px;
-                padding: 2px 4px;
             }
         }
     </style>
@@ -1075,7 +1151,7 @@
         let showPendingInCombined = false;
 
         // ==============================================
-        // COLOR PALETTE - 15 צבעים שונים ובולטים
+        // COLOR PALETTE - צבעים ייחודיים לכל תלמיד
         // ==============================================
         const STUDENT_COLORS = [
             '#e74c3c', // אדום
@@ -1092,17 +1168,30 @@
             '#673ab7', // סגול כהה
             '#009688', // טורקיז כהה
             '#795548', // חום
-            '#607d8b'  // אפור-כחול
+            '#607d8b', // אפור-כחול
+            '#d32f2f', // אדום כהה
+            '#1976d2', // כחול כהה
+            '#388e3c', // ירוק כהה
+            '#f57c00', // כתום עמוק
+            '#7b1fa2'  // סגול עמוק
         ];
 
+        // מאגר גלובלי לשיוך שמות לצבעים
+        const studentColorMap = new Map();
+        let nextColorIndex = 0;
+
         function getColorForStudent(studentName) {
-            let hash = 0;
-            for (let i = 0; i < studentName.length; i++) {
-                hash = ((hash << 5) - hash) + studentName.charCodeAt(i);
-                hash = hash & hash;
+            // אם השם כבר קיבל צבע, החזר אותו
+            if (studentColorMap.has(studentName)) {
+                return studentColorMap.get(studentName);
             }
-            const index = Math.abs(hash) % STUDENT_COLORS.length;
-            return STUDENT_COLORS[index];
+            
+            // אחרת, הקצה לו צבע חדש
+            const color = STUDENT_COLORS[nextColorIndex % STUDENT_COLORS.length];
+            studentColorMap.set(studentName, color);
+            nextColorIndex++;
+            
+            return color;
         }
 
         function applyDynamicColors() {
@@ -2667,7 +2756,10 @@ END:VEVENT
         // ==============================================
         window.addEventListener('DOMContentLoaded', initializeApp);
 
-        console.log('✅ גרסה 2.2 FIXED נטענה! (15/02/2026 - תיקון צבעים + sticky headers + כפתור ארכיון)');
+        console.log('✅ גרסה 2.3 ULTIMATE נטענה! (15/02/2026)');
+        console.log('🎨 מערכת צבעים ייחודית - ללא כפילויות');
+        console.log('📱 תיקון sticky headers בטלפון');
+        console.log('🖨️ הדפסה מתוקנת - רק לוז כולל');
     </script>
 </body>
 </html>
