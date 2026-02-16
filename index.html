@@ -1,5 +1,3 @@
-Here is the updated HTML file with the two issues fixed: the print button now correctly generates a printable schedule that fits on one A4 page, and the WhatsApp share function uses a clean template with proper encoding. All original code and functionality have been preserved.
-```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -116,11 +114,15 @@ Here is the updated HTML file with the two issues fixed: the print button now co
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.85) 100%), 
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: white;
             padding: 32px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
             margin-bottom: 24px;
             text-align: center;
         }
@@ -1000,7 +1002,7 @@ Here is the updated HTML file with the two issues fixed: the print button now co
 
     <div class="container">
         <div class="header">
-            <h1>📅 מערכת לוז דיגיטלית - بيت دרור🏳️‍🌈</h1>
+            <h1>📅 מערכת לוז דיגיטלית - بيت דרور🏳️‍🌈</h1>
             <p>אנא תמלאו את הלוז השבועי שלכם פעם אחת ותלחצו "שלח לאישור" מקווים שיהיה לכם שבוע מצוין🙂</p>
             <p class="arabic-text">الرجاء ملء الجدول الأسبوعي مرة واحدة والنقر على "إرسال للموافقة" نتمنى لكم أسبوعاً رائعاً🙂</p>
         </div>
@@ -2042,7 +2044,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                 `;
             }
             
-            // וידוא שכל ה-entries יש להם entryId ייחודי
             let needsUpdate = false;
             const updatedScheduleData = submission.scheduleData.map((entry, idx) => {
                 if (!entry.entryId) {
@@ -2055,7 +2056,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                 return entry;
             });
             
-            // אם עדכנו entries, נשמור את זה ב-Firebase
             if (needsUpdate && firebaseInitialized) {
                 db.ref(`submissions/${submission.id}/scheduleData`).set(updatedScheduleData).catch(err => {
                     console.error('Error updating entryIds:', err);
@@ -2115,15 +2115,9 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                                           new Date(entry.submittedAt) > new Date(submission.submittedAt);
                             const mergedClass = entry.isMergedNew ? ' merged-new-cell' : '';
                             const newClass = isNew ? ' entry-new' : '';
-                            // וידוא שיש entryId ייחודי - אם לא, יצירת אחד ייחודי
-                            // בלוז ממוזג יכול להיות כמה אינטריות באותו יום ושעה, אז נוסיף אינדקס
-                            // חשוב: אם אין entryId, ניצור אחד ונשמור אותו בנתונים
                             let entryId = entry.entryId;
                             if (!entryId) {
-                                // יצירת entryId ייחודי עם timestamp ו-random string
                                 entryId = `${entry.day}-${entry.time}-${entry.submittedAt || Date.now()}-${entryIdx}-${Math.random().toString(36).substr(2, 9)}`;
-                                // עדכון entryId בנתונים (אבל רק אם זה לא בלוז ממוזג גדול מדי)
-                                // נשמור את זה רק אם זה entry חדש
                             }
                             html += `
                                 <div class="cell-content${newClass}${mergedClass}">
@@ -2177,23 +2171,16 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     return;
                 }
                 
-                // מציאת האינדקס של האינטריה לעדכון
-                // בלוז ממוזג יכול להיות כמה אינטריות באותו יום ושעה, אבל כל אחת עם entryId ייחודי
                 let entryIndex = sub.scheduleData.findIndex(e => e.entryId === entryId);
                 
-                // אם לא נמצא לפי entryId מדויק, ננסה לפי day-time (backward compatibility)
                 if (entryIndex === -1) {
-                    // נסה לפרק את entryId אם הוא בפורמט day-time-...
                     const parts = entryId.split('-');
                     if (parts.length >= 2) {
                         const day = parseInt(parts[0]);
                         const time = parseInt(parts[1]);
                         if (!isNaN(day) && !isNaN(time)) {
-                            // נחפש את האינטריה הראשונה עם day ו-time תואמים
-                            // אבל רק אם אין לה entryId או שה-entryId תואם חלקית
                             entryIndex = sub.scheduleData.findIndex(e => {
                                 if (e.day === day && e.time === time) {
-                                    // אם יש entryId תואם או אין entryId בכלל
                                     return e.entryId === entryId || 
                                            (!e.entryId && entryId.startsWith(`${day}-${time}-`)) ||
                                            (e.entryId && entryId.includes(e.entryId));
@@ -2204,14 +2191,12 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     }
                 }
                 
-                // אם עדיין לא נמצא, נחפש לפי day-time בלבד (fallback אחרון)
                 if (entryIndex === -1) {
                     const parts = entryId.split('-');
                     if (parts.length >= 2) {
                         const day = parseInt(parts[0]);
                         const time = parseInt(parts[1]);
                         if (!isNaN(day) && !isNaN(time)) {
-                            // מצא את האינטריה הראשונה עם day ו-time תואמים ללא entryId
                             entryIndex = sub.scheduleData.findIndex(e => 
                                 e.day === day && e.time === time && !e.entryId
                             );
@@ -2234,14 +2219,12 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     return;
                 }
                 
-                // עדכון הסטטוס ושמירת entryId אם חסר
                 const updated = sub.scheduleData.map((e, idx) => {
                     if (idx === entryIndex) {
                         const updatedEntry = { 
                             ...e, 
                             status: status
                         };
-                        // שמירה על entryId קיים או שמירת ה-entryId שנשלח
                         if (!updatedEntry.entryId) {
                             updatedEntry.entryId = entryId;
                         }
@@ -2291,7 +2274,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
 
         let currentMoveEntry = null;
         function showMoveEntryModal(subId, entryId) {
-            // נצטרך למצוא את היום והשעה הנוכחיים כדי להציג אותם כברירת מחדל? לא חייב.
             currentMoveEntry = { submissionId: subId, entryId };
             populateMoveEntryTimeOptions();
             document.getElementById('moveEntryModal').classList.add('show');
@@ -2379,7 +2361,7 @@ Here is the updated HTML file with the two issues fixed: the print button now co
         }
 
         // ==============================================
-        // מיזוג לוזים (עם entryId) - גרסה מתקדמת
+        // מיזוג לוזים (עם entryId)
         // ==============================================
         function mergeSelectedSubmissions() {
             const checkboxes = document.querySelectorAll('.merge-checkbox:checked');
@@ -2504,9 +2486,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
             }
         }
 
-        // ==============================================
-        // הפרדת לוז ממוזג - גרסה מתקדמת
-        // ==============================================
         async function openSplitSchedule(submissionId) {
             if (!firebaseInitialized) return;
             try {
@@ -2553,7 +2532,7 @@ Here is the updated HTML file with the two issues fixed: the print button now co
         }
 
         // ==============================================
-        // שיתוף לווצאפ – טקסט מעוצב (תיקון בעיות תצוגה)
+        // שיתוף לווצאפ – טקסט מעוצב (תיקון קידוד מלא) ✅ FIXED
         // ==============================================
         async function shareScheduleToWhatsApp(submissionId) {
             if (!firebaseInitialized) return;
@@ -2588,7 +2567,7 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     });
                 }
 
-                // בניית הודעה לפי תבנית נקייה
+                // בניית הודעה לפי תבנית נקייה - שימוש באימוג'ים UTF-8 סטנדרטיים
                 let message = `לוז של ${studentName} לשבוע ${week}:\n\n`;
 
                 if (Object.keys(daysMap).length === 0) {
@@ -2617,8 +2596,9 @@ Here is the updated HTML file with the two issues fixed: the print button now co
 
                 message += 'שבוע מצוין! ✨';
 
-                // קידוד נכון להעברה בוואטסאפ
-                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                // קידוד מלא ונכון של המסר כולל תווי RTL והטקסט בעברית
+                const encodedMessage = encodeURIComponent(message);
+                const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
                 window.open(whatsappUrl, '_blank');
 
                 showToast('ההודעה נשלחה לווצאפ');
@@ -2629,7 +2609,7 @@ Here is the updated HTML file with the two issues fixed: the print button now co
         }
 
         // ==============================================
-        // שאר הפונקציות (archive, rename, delete וכו') נשארות דומות
+        // שאר הפונקציות (archive, rename, delete וכו')
         // ==============================================
         async function archiveSubmission(submissionId) {
             if (!confirm('האם להעביר לוז זה לארכיון?')) return;
@@ -3210,7 +3190,7 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     showToast('הלוז לא נמצא', 'danger');
                     return;
                 }
-                submission.id = subId; // for consistency
+                submission.id = subId;
                 const printHtml = generatePrintHtml(submission);
                 const printWindow = window.open('', '_blank');
                 printWindow.document.write(printHtml);
@@ -3227,7 +3207,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
             const days = scheduleStructure.days;
             const times = scheduleStructure.times;
             
-            // Create a map for quick lookup
             const entriesByDayTime = {};
             if (submission.scheduleData) {
                 submission.scheduleData.forEach(entry => {
@@ -3237,7 +3216,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                 });
             }
 
-            // Build table rows
             let tableRows = '';
             times.forEach((timeSlot, timeIndex) => {
                 tableRows += `<tr><td class="time-cell">${timeSlot.time}</td>`;
@@ -3245,7 +3223,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     const key = `${dayIndex}-${timeIndex}`;
                     const entries = entriesByDayTime[key] || [];
                     
-                    // Check for fixed or suggested cell
                     const fixedSlot = timeSlot.type === 'fixed' && timeSlot.days && timeSlot.days.includes(dayIndex);
                     const suggestedSlot = timeSlot.type === 'suggested' && timeSlot.days && timeSlot.days.includes(dayIndex);
                     
@@ -3267,14 +3244,12 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                 tableRows += '</tr>';
             });
 
-            // Full HTML document with styles that fit on one page
             return `<!DOCTYPE html>
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>לוז - ${submission.studentName}</title>
     <style>
-        /* Simplified print styles – ensure one page */
         body {
             font-family: 'Heebo', 'Cairo', sans-serif;
             padding: 10px;
@@ -3317,7 +3292,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
         .fixed-cell { background: #f0f4ff; color: #64748b; }
         .suggested-cell { background: #fef9e7; border: 1px dashed #f39c12; }
         .free-cell { background: white; }
-        /* Hide interactive elements */
         .btn, .cell-actions, .status-badge { display: none; }
         @media print {
             @page { size: A4 landscape; margin: 0.8cm; }
@@ -3356,13 +3330,11 @@ Here is the updated HTML file with the two issues fixed: the print button now co
         }
 
         async function downloadStudentCopy() {
-            // נסה לטעון מהלוקל סטורג' אם אין lastStudentSubmission
             if (!lastStudentSubmission) {
                 const draftJson = localStorage.getItem('studentDraft');
                 if (draftJson) {
                     try {
                         const draft = JSON.parse(draftJson);
-                        // יצירת submission מהדרפט
                         const scheduleArray = Object.keys(draft.data || {}).map(key => {
                             const [day, time] = key.split('-').map(Number);
                             return {
@@ -3391,7 +3363,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
             }
 
             try {
-                // נסה ליצור PDF אם הספרייה זמינה
                 if (window.jspdf && window.jspdf.jsPDF) {
                     const blob = await generateSchedulePdfBlob(lastStudentSubmission);
                     const fileName = `לוז-${lastStudentSubmission.studentName || 'לוז'}-${(lastStudentSubmission.weekDisplay || '').replace(/[/\s]/g, '-') || 'ללא-תאריך'}.pdf`;
@@ -3406,7 +3377,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
                     }, 100);
                     showToast('הלוז נשמר בהצלחה');
                 } else {
-                    // אם אין PDF, צור קובץ טקסט
                     let textContent = `לוז שבועי - ${lastStudentSubmission.studentName || 'ללא שם'}\n`;
                     textContent += `שבוע: ${lastStudentSubmission.weekDisplay || 'לא צוין'}\n\n`;
                     
@@ -3495,48 +3465,6 @@ Here is the updated HTML file with the two issues fixed: the print button now co
             return doc.output('blob');
         }
 
-        function generateSingleScheduleIcsBlob(submission) {
-            const events = [];
-            if (!submission.scheduleData || !submission.weekStart) {
-                return new Blob(['BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR'], { type: 'text/calendar' });
-            }
-
-            submission.scheduleData.forEach(e => {
-                if (e.status === 'approved') {
-                    events.push({
-                        day: e.day,
-                        time: e.time,
-                        content: e.content
-                    });
-                }
-            });
-
-            if (events.length === 0) {
-                return new Blob(['BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR'], { type: 'text/calendar' });
-            }
-
-            let ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//בית דרור//\nCALNAME:${submission.studentName || ''}\n`;
-            const weekStartDate = new Date(submission.weekStart);
-
-            events.forEach((ev, i) => {
-                const date = new Date(weekStartDate);
-                date.setDate(date.getDate() + ev.day);
-                const slot = (scheduleStructure.times || [])[ev.time];
-                if (!slot) return;
-                const [h, m] = (slot.time || '00:00').split(':');
-                date.setHours(parseInt(h, 10), parseInt(m, 10), 0);
-                const end = new Date(date);
-                end.setHours(date.getHours() + 1);
-
-                const fmt = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-                ics += `BEGIN:VEVENT\nUID:${Date.now()}-${i}@beit-dror\nDTSTAMP:${fmt(new Date())}\nDTSTART:${fmt(date)}\nDTEND:${fmt(end)}\nSUMMARY:${ev.content} - ${submission.studentName || ''}\nLOCATION:בית דרור\nEND:VEVENT\n`;
-            });
-
-            ics += 'END:VCALENDAR';
-            return new Blob([ics], { type: 'text/calendar' });
-        }
-
         function autoGrowTextarea(el) {
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
@@ -3571,4 +3499,3 @@ Here is the updated HTML file with the two issues fixed: the print button now co
     </script>
 </body>
 </html>
-```
