@@ -70,7 +70,7 @@
             user-select: none;
         }
 
-        /* דמויות חמודות (מופיעות בכל הטאבים) */
+        /* דמויות חמודות (מופיעות בכל הטאבים) - מעודכן לסימטריה */
         .cute-character {
             position: fixed;
             width: 150px;
@@ -83,18 +83,19 @@
             animation: floatCharacter 8s ease-in-out infinite;
         }
         .unicorn {
-            bottom: 150px;
-            right: 30px;
+            bottom: 20px;
+            right: 20px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="80" r="40" fill="%23ffe0f0"/><circle cx="85" cy="70" r="5" fill="%23333"/><circle cx="115" cy="70" r="5" fill="%23333"/><path d="M 85 90 Q 100 100 115 90" stroke="%23ff80b0" stroke-width="3" fill="none"/><ellipse cx="100" cy="130" rx="45" ry="55" fill="%23f8c3ff"/><rect x="70" y="180" width="15" height="20" fill="%23ffe0f0" rx="3"/><rect x="115" y="180" width="15" height="20" fill="%23ffe0f0" rx="3"/><path d="M 100 25 L 120 15 L 125 35 L 115 45 L 105 30 L 95 45 L 85 30 L 90 15 L 100 25" fill="%23ffcc00" opacity="0.8"/><circle cx="100" cy="40" r="7" fill="%23ff99cc"/></svg>');
         }
         .rabbit {
-            top: 250px;
-            left: 30px;
+            top: 20px;
+            left: 20px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="80" r="40" fill="%23f5e6d3"/><circle cx="85" cy="70" r="5" fill="%23333"/><circle cx="115" cy="70" r="5" fill="%23333"/><path d="M 85 90 Q 100 100 115 90" stroke="%23ffaabb" stroke-width="3" fill="none"/><ellipse cx="100" cy="130" rx="45" ry="55" fill="%23f0d5b0"/><rect x="70" y="180" width="15" height="20" fill="%23f5e6d3" rx="3"/><rect x="115" y="180" width="15" height="20" fill="%23f5e6d3" rx="3"/><ellipse cx="70" cy="50" rx="15" ry="30" fill="%23f5e6d3" transform="rotate(-20 70 50)"/><ellipse cx="130" cy="50" rx="15" ry="30" fill="%23f5e6d3" transform="rotate(20 130 50)"/><circle cx="70" cy="45" r="5" fill="%23ffaabb"/><circle cx="130" cy="45" r="5" fill="%23ffaabb"/></svg>');
         }
         .cute-character.unicorn2 {
-            top: 100px;
-            right: 150px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             width: 120px;
             height: 120px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="80" r="40" fill="%23ffe0f0"/><circle cx="85" cy="70" r="5" fill="%23333"/><circle cx="115" cy="70" r="5" fill="%23333"/><path d="M 85 90 Q 100 100 115 90" stroke="%23ff80b0" stroke-width="3" fill="none"/><ellipse cx="100" cy="130" rx="45" ry="55" fill="%23f8c3ff"/><rect x="70" y="180" width="15" height="20" fill="%23ffe0f0" rx="3"/><rect x="115" y="180" width="15" height="20" fill="%23ffe0f0" rx="3"/><path d="M 100 25 L 120 15 L 125 35 L 115 45 L 105 30 L 95 45 L 85 30 L 90 15 L 100 25" fill="%23ffcc00" opacity="0.8"/><circle cx="100" cy="40" r="7" fill="%23ff99cc"/></svg>');
@@ -743,7 +744,7 @@
             transform: scale(1.2);
         }
 
-        /* רקע עם דמות חמודה - רק לטאב נערים */
+        /* רקע עם דמות חמודה - רק לטאב נערים - מעודכן לסימטריה */
         #student-tab {
             position: relative;
         }
@@ -768,7 +769,7 @@
         #student-tab::after {
             content: '';
             position: fixed;
-            top: 120px;
+            top: 20px;
             right: 20px;
             width: 180px;
             height: 180px;
@@ -990,7 +991,7 @@
 <body>
     <!-- נצנצים לבנים עדינים -->
     <div class="sparkles" id="sparkles"></div>
-    <!-- דמויות חמודות בכל העמודים -->
+    <!-- דמויות חמודות בכל העמודים - מעודכן לסימטריה -->
     <div class="cute-character unicorn"></div>
     <div class="cute-character rabbit"></div>
     <div class="cute-character unicorn2"></div>
@@ -3194,8 +3195,159 @@
             }
         }
 
+        // ==============================================
+        // פונקציות הדפסה מתוקנות
+        // ==============================================
+        function generatePrintHtml(submission) {
+            const days = scheduleStructure.days;
+            const times = scheduleStructure.times;
+            
+            // Create a map for quick lookup
+            const entriesByDayTime = {};
+            if (submission.scheduleData) {
+                submission.scheduleData.forEach(entry => {
+                    const key = `${entry.day}-${entry.time}`;
+                    if (!entriesByDayTime[key]) entriesByDayTime[key] = [];
+                    entriesByDayTime[key].push(entry);
+                });
+            }
+
+            // Build table rows
+            let tableRows = '';
+            times.forEach((timeSlot, timeIndex) => {
+                tableRows += `<tr><td class="time-cell">${timeSlot.time}</td>`;
+                days.forEach((day, dayIndex) => {
+                    const key = `${dayIndex}-${timeIndex}`;
+                    const entries = entriesByDayTime[key] || [];
+                    
+                    // Check for fixed or suggested cell
+                    const fixedSlot = timeSlot.type === 'fixed' && timeSlot.days && timeSlot.days.includes(dayIndex);
+                    const suggestedSlot = timeSlot.type === 'suggested' && timeSlot.days && timeSlot.days.includes(dayIndex);
+                    
+                    if (fixedSlot) {
+                        tableRows += `<td class="fixed-cell">${timeSlot.content}</td>`;
+                    } else if (entries.length > 0) {
+                        tableRows += `<td class="free-cell">`;
+                        entries.forEach(entry => {
+                            const statusText = entry.status === 'approved' ? '✅' : (entry.status === 'rejected' ? '❌' : '⏳');
+                            tableRows += `<div>${entry.content} ${statusText}</div>`;
+                        });
+                        tableRows += `</td>`;
+                    } else if (suggestedSlot) {
+                        tableRows += `<td class="suggested-cell">${timeSlot.content}</td>`;
+                    } else {
+                        tableRows += `<td class="free-cell"></td>`;
+                    }
+                });
+                tableRows += '</tr>';
+            });
+
+            // Full HTML document with styles
+            return `<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>לוז - ${submission.studentName}</title>
+    <style>
+        /* Copy of main styles (simplified for print) */
+        body {
+            font-family: 'Heebo', 'Cairo', sans-serif;
+            padding: 20px;
+            background: white;
+            color: #1e293b;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 24px; margin-bottom: 8px; }
+        .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            direction: rtl;
+        }
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #e0e7ff;
+            padding: 8px;
+            text-align: center;
+            vertical-align: top;
+        }
+        .schedule-table th {
+            background: #f0f4ff;
+            font-weight: 600;
+        }
+        .time-cell { background: #f0f4ff; font-weight: 500; white-space: nowrap; }
+        .fixed-cell { background: #f0f4ff; color: #64748b; }
+        .suggested-cell { background: #fef9e7; border: 2px dashed #f39c12; }
+        .free-cell { background: white; }
+        /* Hide buttons and interactive elements */
+        .btn, .cell-actions, .status-badge { display: none; }
+        /* Override print media to show everything */
+        @media print {
+            body { background: white; }
+            .header { background: #667eea !important; color: white !important; }
+            .schedule-table th, .schedule-table td { border: 1px solid #000 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>לוז - ${submission.studentName}</h1>
+            <p>שבוע: ${submission.weekDisplay}</p>
+        </div>
+        <div class="card">
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>שעה</th>
+                        ${days.map(day => `<th>${day}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>`;
+        }
+
         function printSingleSchedule(subId) {
-            window.print();
+            if (!firebaseInitialized) {
+                showToast('Firebase לא מחובר', 'danger');
+                return;
+            }
+            db.ref(`submissions/${subId}`).once('value').then(snapshot => {
+                const submission = snapshot.val();
+                if (!submission) {
+                    showToast('הלוז לא נמצא', 'danger');
+                    return;
+                }
+                submission.id = subId; // not needed but for consistency
+                const printHtml = generatePrintHtml(submission);
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(printHtml);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            }).catch(error => {
+                console.error(error);
+                showToast('שגיאה בטעינת הלוז', 'danger');
+            });
         }
 
         function printCombinedSchedule() {
