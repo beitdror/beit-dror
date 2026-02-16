@@ -67,13 +67,7 @@
             position: absolute;
             color: rgba(255, 255, 255, 0.3);
             font-size: 1.5rem;
-            animation: sparkle 5s linear infinite;
             user-select: none;
-        }
-        @keyframes sparkle {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.8; }
-            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
 
         /* דמויות חמודות (מופיעות בכל הטאבים) */
@@ -1457,13 +1451,13 @@
 
         function createSparkles() {
             const container = document.getElementById('sparkles');
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 50; i++) {
                 const span = document.createElement('span');
                 span.textContent = '✦';
                 span.style.left = Math.random() * 100 + '%';
-                span.style.animationDelay = Math.random() * 10 + 's';
-                span.style.fontSize = (Math.random() * 20 + 10) + 'px';
-                span.style.opacity = 0.2 + Math.random() * 0.3;
+                span.style.top = Math.random() * 100 + '%';
+                span.style.fontSize = (Math.random() * 15 + 8) + 'px';
+                span.style.opacity = 0.15 + Math.random() * 0.25;
                 container.appendChild(span);
             }
         }
@@ -2044,26 +2038,28 @@
                                           new Date(entry.submittedAt) > new Date(submission.submittedAt);
                             const mergedClass = entry.isMergedNew ? ' merged-new-cell' : '';
                             const newClass = isNew ? ' entry-new' : '';
+                            // וידוא שיש entryId - אם לא, יצירת אחד
+                            const entryId = entry.entryId || `${entry.day}-${entry.time}-${entry.submittedAt || Date.now()}`;
                             html += `
                                 <div class="cell-content${newClass}${mergedClass}">
                                     <input type="text" 
                                            class="editable-input" 
-                                           value="${entry.content}"
-                                           onchange="updateEntryContent('${submission.id}', '${entry.entryId}', this.value)">
-                                    <span class="status-badge status-${entry.status}">
-                                        ${entry.status === 'pending' ? 'ממתין' : entry.status === 'approved' ? 'אושר' : 'נדחה'}
+                                           value="${(entry.content || '').replace(/"/g, '&quot;')}"
+                                           onchange="updateEntryContent('${submission.id}', '${entryId}', this.value)">
+                                    <span class="status-badge status-${entry.status || 'pending'}">
+                                        ${(entry.status || 'pending') === 'pending' ? 'ממתין' : (entry.status || 'pending') === 'approved' ? 'אושר' : 'נדחה'}
                                     </span>
                                     <div class="cell-actions">
-                                        ${entry.status === 'pending' ? `
-                                            <button class="btn btn-success btn-sm" onclick="updateStatus('${submission.id}', '${entry.entryId}', 'approved')">✓</button>
-                                            <button class="btn btn-danger btn-sm" onclick="updateStatus('${submission.id}', '${entry.entryId}', 'rejected')">✗</button>
-                                        ` : entry.status === 'approved' ? `
-                                            <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', '${entry.entryId}', 'pending')">↩️ בטל אישור</button>
+                                        ${(entry.status || 'pending') === 'pending' ? `
+                                            <button class="btn btn-success btn-sm" onclick="updateStatus('${submission.id}', '${entryId}', 'approved')">✓</button>
+                                            <button class="btn btn-danger btn-sm" onclick="updateStatus('${submission.id}', '${entryId}', 'rejected')">✗</button>
+                                        ` : (entry.status || 'pending') === 'approved' ? `
+                                            <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', '${entryId}', 'pending')">↩️ בטל אישור</button>
                                         ` : `
-                                            <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', '${entry.entryId}', 'pending')">↩️ בטל דחייה</button>
+                                            <button class="btn btn-secondary btn-sm" onclick="updateStatus('${submission.id}', '${entryId}', 'pending')">↩️ בטל דחייה</button>
                                         `}
-                                        <button class="btn btn-secondary btn-sm" onclick="showMoveEntryModal('${submission.id}', '${entry.entryId}')">⏰</button>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteEntry('${submission.id}', '${entry.entryId}')">🗑️</button>
+                                        <button class="btn btn-secondary btn-sm" onclick="showMoveEntryModal('${submission.id}', '${entryId}')">⏰</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteEntry('${submission.id}', '${entryId}')">🗑️</button>
                                     </div>
                                 </div>
                             `;
@@ -2091,14 +2087,32 @@
             try {
                 const snapshot = await db.ref(`submissions/${subId}`).once('value');
                 const sub = snapshot.val();
-                const updated = sub.scheduleData.map(e => 
-                    e.entryId === entryId ? { ...e, status } : e
+                if (!sub || !sub.scheduleData) {
+                    showToast('שגיאה: נתונים לא תקינים', 'danger');
+                    return;
+                }
+                
+                // מציאת האינדקס של האינטריה לעדכון
+                const entryIndex = sub.scheduleData.findIndex(e => 
+                    e.entryId === entryId || 
+                    (e.entryId === undefined && `${e.day}-${e.time}` === entryId)
                 );
+                
+                if (entryIndex === -1) {
+                    showToast('שגיאה: פעילות לא נמצאה', 'danger');
+                    return;
+                }
+                
+                const updated = sub.scheduleData.map((e, idx) => 
+                    idx === entryIndex ? { ...e, status, entryId: e.entryId || entryId } : e
+                );
+                
                 await db.ref(`submissions/${subId}/scheduleData`).set(updated);
-                showToast('עודכן');
+                showToast('עודכן בהצלחה');
                 loadSubmissions();
             } catch (error) {
-                showToast('שגיאה', 'danger');
+                console.error('Error updating status:', error);
+                showToast('שגיאה בעדכון', 'danger');
             }
         }
 
@@ -2396,7 +2410,7 @@
         }
 
         // ==============================================
-        // שיתוף לווצאפ – גרסה מתקדמת עם PDF
+        // שיתוף לווצאפ – טקסט עם רשימה מפורטת
         // ==============================================
         async function shareScheduleToWhatsApp(submissionId) {
             if (!firebaseInitialized) return;
@@ -2408,55 +2422,67 @@
                     return;
                 }
 
-                submission.id = submissionId;
-                const pdfBlob = await generateSchedulePdfBlob(submission);
-                const icsBlob = generateSingleScheduleIcsBlob(submission);
+                const studentName = submission.studentName;
+                const week = submission.weekDisplay || 'לא צוין';
 
-                const pdfFileName = `לוז-${submission.studentName}-${(submission.weekDisplay || '').replace(/[/\s]/g, '-')}.pdf`;
-                const icsFileName = `לוז-${submission.studentName}-${(submission.weekDisplay || '').replace(/[/\s]/g, '-')}.ics`;
+                // בניית רשימת ימים מפורטת
+                let approvedText = '';
+                let pendingText = '';
+                const daysMap = {};
 
-                const message = `זה הלוז המאושר של ${submission.studentName}, שבוע מצוין!`;
-
-                const files = [];
-                try {
-                    files.push(new File([pdfBlob], pdfFileName, { type: 'application/pdf' }));
-                    files.push(new File([icsBlob], icsFileName, { type: 'text/calendar' }));
-                } catch (e) {
-                    // דפדפנים ישנים ללא File - נשתמש רק בהורדה ידנית
-                }
-
-                if (navigator.canShare && files.length === 2 && navigator.canShare({ files })) {
-                    await navigator.share({
-                        files,
-                        text: message,
-                        title: 'לוז מאושר'
+                if (submission.scheduleData && Array.isArray(submission.scheduleData)) {
+                    submission.scheduleData.forEach(entry => {
+                        const dayName = scheduleStructure.days[entry.day] || 'יום לא ידוע';
+                        const timeStr = scheduleStructure.times[entry.time]?.time || '??:??';
+                        const line = `${dayName} ${timeStr}: ${entry.content}`;
+                        
+                        if (entry.status === 'approved') {
+                            if (!daysMap[dayName]) daysMap[dayName] = { approved: [], pending: [] };
+                            daysMap[dayName].approved.push(`${timeStr}: ${entry.content}`);
+                        } else {
+                            if (!daysMap[dayName]) daysMap[dayName] = { approved: [], pending: [] };
+                            daysMap[dayName].pending.push(`${timeStr}: ${entry.content}`);
+                        }
                     });
-                    showToast('הלוז נשלח לשיתוף');
-                } else {
-                    // נפעיל הורדה ידנית של הקבצים ופתיחת וואטסאפ עם הודעה מוכנה
-                    const pdfLink = document.createElement('a');
-                    pdfLink.href = URL.createObjectURL(pdfBlob);
-                    pdfLink.download = pdfFileName;
-                    document.body.appendChild(pdfLink);
-                    pdfLink.click();
-                    document.body.removeChild(pdfLink);
-
-                    const icsLink = document.createElement('a');
-                    icsLink.href = URL.createObjectURL(icsBlob);
-                    icsLink.download = icsFileName;
-                    document.body.appendChild(icsLink);
-                    icsLink.click();
-                    document.body.removeChild(icsLink);
-
-                    const encodedMsg = encodeURIComponent(message);
-                    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
-                    window.open(whatsappUrl, '_blank');
-
-                    showToast('נפתח וואטסאפ, הקבצים נשמרו להעלאה ידנית');
                 }
+
+                // בניית הודעה מסודרת לפי ימים
+                let message = `לוז של ${studentName} לשבוע ${week}:\n\n`;
+                
+                if (Object.keys(daysMap).length === 0) {
+                    message += 'אין פעילויות בלוז';
+                } else {
+                    Object.keys(daysMap).forEach(day => {
+                        message += `📅 ${day}:\n`;
+                        
+                        if (daysMap[day].approved.length > 0) {
+                            message += '✅ מאושר:\n';
+                            daysMap[day].approved.forEach(activity => {
+                                message += `   • ${activity}\n`;
+                            });
+                        }
+                        
+                        if (daysMap[day].pending.length > 0) {
+                            message += '⏳ ממתין/נדחה:\n';
+                            daysMap[day].pending.forEach(activity => {
+                                message += `   • ${activity}\n`;
+                            });
+                        }
+                        
+                        message += '\n';
+                    });
+                }
+
+                message += '\nשבוע מצוין! 🌈';
+
+                // פתיחת וואטסאפ
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+
+                showToast('ההודעה נשלחה לווצאפ');
             } catch (error) {
                 console.error(error);
-                showToast('שגיאה בשיתוף', 'danger');
+                showToast('שגיאה בשליחה לווצאפ', 'danger');
             }
         }
 
