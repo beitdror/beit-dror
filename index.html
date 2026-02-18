@@ -1008,11 +1008,11 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('student')">נערימ.ות / شباب👥</button>
-            <button class="tab" onclick="switchTab('coordinator')">רכזת חינוכית👩‍💼🔒</button>
-            <button class="tab" onclick="switchTab('combined')">לוז כולל🧮🔒</button>
-            <button class="tab" onclick="switchTab('archive')">ארכיון📦🔒</button>
-            <button class="tab" onclick="switchTab('editor')">עריכת לוז⚙️🔒</button>
+            <button class="tab active" onclick="switchTab('student', this)">נערימ.ות / شباب👥</button>
+            <button class="tab" onclick="switchTab('coordinator', this)">רכזת חינוכית👩‍💼🔒</button>
+            <button class="tab" onclick="switchTab('combined', this)">לוז כולל🧮🔒</button>
+            <button class="tab" onclick="switchTab('archive', this)">ארכיון📦🔒</button>
+            <button class="tab" onclick="switchTab('editor', this)">עריכת לוז⚙️🔒</button>
         </div>
 
         <!-- TAB 1: Student View -->
@@ -1397,6 +1397,16 @@
         let showPendingInCombined = false;
         let lastStudentSubmission = null;
 
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // ==============================================
         // COLOR PALETTE
         // ==============================================
@@ -1533,9 +1543,13 @@
         // TAB SWITCHING
         // ==============================================
         async function hashPassword(password) {
+            if (!window.crypto || !window.crypto.subtle || typeof window.crypto.subtle.digest !== 'function') {
+                showToast('הדפדפן לא תומך באימות מאובטח. יש לפתוח את הדף דרך https או localhost.', 'danger');
+                throw new Error('Secure crypto.subtle.digest not available');
+            }
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             return hashHex;
@@ -1545,7 +1559,7 @@
         const PASSWORD_STORAGE_KEY = 'regevPasswordHash';
         let isAuthenticated = false;
         
-        async function switchTab(tabName) {
+        async function switchTab(tabName, clickedTab) {
             if (['coordinator', 'archive', 'combined', 'editor'].includes(tabName)) {
                 if (!isAuthenticated) {
                     try {
@@ -1588,12 +1602,10 @@
             if (tabElement) {
                 tabElement.classList.add('active');
             }
-            
-            try {
-                if (window.event && window.event.target) {
-                    window.event.target.classList.add('active');
-                }
-            } catch (e) {}
+
+            if (clickedTab && clickedTab.classList) {
+                clickedTab.classList.add('active');
+            }
 
             if (tabName === 'coordinator') {
                 if (firebaseInitialized) {
@@ -1671,23 +1683,26 @@
                         html += `<td class="fixed-cell">${cellContent}</td>`;
                     } else if (cellType === 'suggested') {
                         const value = studentScheduleData[key] || '';
+                        const safeValue = escapeHtml(value);
+                        const safePlaceholder = escapeHtml(cellContent || '');
                         html += `<td class="suggested-cell">
                             <textarea 
                                    data-day="${dayIndex}" 
                                    data-time="${timeIndex}"
                                    onchange="updateStudentData(${dayIndex}, ${timeIndex}, this.value)"
                                    oninput="autoGrowTextarea(this)"
-                                   placeholder="${cellContent}">${value}</textarea>
+                                   placeholder="${safePlaceholder}">${safeValue}</textarea>
                         </td>`;
                     } else {
                         const value = studentScheduleData[key] || '';
+                        const safeValue = escapeHtml(value);
                         html += `<td class="free-cell">
                             <textarea 
                                    data-day="${dayIndex}" 
                                    data-time="${timeIndex}"
                                    onchange="updateStudentData(${dayIndex}, ${timeIndex}, this.value)"
                                    oninput="autoGrowTextarea(this)"
-                                   placeholder="...">${value}</textarea>
+                                   placeholder="...">${safeValue}</textarea>
                         </td>`;
                     }
                 });
@@ -2164,7 +2179,7 @@
                                 <div class="cell-content${newClass}${mergedClass}">
                                     <input type="text" 
                                            class="editable-input" 
-                                           value="${(entry.content || '').replace(/"/g, '&quot;')}"
+                                           value="${escapeHtml(entry.content || '')}"
                                            onchange="updateEntryContent('${submission.id}', '${entryId}', this.value)"
                                            placeholder="פעילות...">
                                     
@@ -2172,7 +2187,7 @@
                                            class="editable-input" 
                                            style="min-height: 40px; font-size: 12px; color: #dc2626; border: 1px dashed #dc2626; margin-top: 4px;"
                                            placeholder="הערת רכזת (אופציונלי)..."
-                                           onchange="updateEntryNote('${submission.id}', '${entryId}', this.value)">${(entry.coordinatorNote || '').replace(/"/g, '&quot;')}</textarea>
+                                           onchange="updateEntryNote('${submission.id}', '${entryId}', this.value)">${escapeHtml(entry.coordinatorNote || '')}</textarea>
                                     
                                     <span class="status-badge status-${entry.status || 'pending'}">
                                         ${(entry.status || 'pending') === 'pending' ? 'ממתין' : (entry.status || 'pending') === 'approved' ? 'אושר' : 'נדחה'}
@@ -2943,7 +2958,6 @@
                     if (sub.weekDisplay === week) subs.push({ id: child.key, ...sub });
                 });
                 renderCombinedView(subs);
-                applyDynamicColors();
             } catch (error) {
                 console.error(error);
             }
