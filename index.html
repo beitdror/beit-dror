@@ -1542,20 +1542,38 @@
         }
         
         const PASSWORD_HASH = '34ff3bb3732ca5436824c18fc789ff0507ae31807ca3f782b7d7740235d5d719';
+        const PASSWORD_STORAGE_KEY = 'regevPasswordHash';
+        let isAuthenticated = false;
         
         async function switchTab(tabName) {
             if (['coordinator', 'archive', 'combined', 'editor'].includes(tabName)) {
-                const password = prompt('הכנס סיסמה:');
-                
-                if (!password) {
-                    return;
-                }
-                
-                const inputHash = await hashPassword(password);
-                
-                if (inputHash !== PASSWORD_HASH) {
-                    showToast('סיסמה שגויה', 'danger');
-                    return;
+                if (!isAuthenticated) {
+                    try {
+                        const storedHash = localStorage.getItem(PASSWORD_STORAGE_KEY);
+                        if (storedHash === PASSWORD_HASH) {
+                            isAuthenticated = true;
+                        }
+                    } catch (e) {}
+
+                    if (!isAuthenticated) {
+                        const password = prompt('הכנס סיסמה:');
+                        
+                        if (!password) {
+                            return;
+                        }
+                        
+                        const inputHash = await hashPassword(password);
+                        
+                        if (inputHash !== PASSWORD_HASH) {
+                            showToast('סיסמה שגויה', 'danger');
+                            return;
+                        }
+
+                        isAuthenticated = true;
+                        try {
+                            localStorage.setItem(PASSWORD_STORAGE_KEY, inputHash);
+                        } catch (e) {}
+                    }
                 }
             }
 
@@ -2837,15 +2855,26 @@
             try {
                 const snapshot = await db.ref(`submissions/${currentCoordQuickCopy}`).once('value');
                 const sub = snapshot.val();
-                const newEntries = times.map(t => ({
-                    day: parseInt(day),
-                    time: t,
-                    content,
-                    status: 'pending',
-                    submittedAt: new Date().toISOString(),
-                    entryId: `${Date.now()}-${Math.random()}`
-                }));
-                const updated = [...sub.scheduleData, ...newEntries];
+                const existing = (sub && Array.isArray(sub.scheduleData)) ? sub.scheduleData : [];
+                const dayInt = parseInt(day, 10);
+                
+                const newEntries = times
+                    .filter(t => !existing.some(e => e.day === dayInt && e.time === t))
+                    .map(t => ({
+                        day: dayInt,
+                        time: t,
+                        content,
+                        status: 'pending',
+                        submittedAt: new Date().toISOString(),
+                        entryId: `${Date.now()}-${Math.random()}`
+                    }));
+
+                if (newEntries.length === 0) {
+                    showToast('השעות שבחרת כבר קיימות');
+                    return;
+                }
+
+                const updated = [...existing, ...newEntries];
                 await db.ref(`submissions/${currentCoordQuickCopy}/scheduleData`).set(updated);
                 showToast('הועתק');
                 closeCoordinatorQuickCopyModal();
@@ -2856,6 +2885,13 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const storedHash = localStorage.getItem(PASSWORD_STORAGE_KEY);
+                if (storedHash === PASSWORD_HASH) {
+                    isAuthenticated = true;
+                }
+            } catch (e) {}
+
             const cds = document.getElementById('coordQuickCopyDay');
             if (cds) cds.addEventListener('change', populateCoordQuickCopyTimesList);
         });
