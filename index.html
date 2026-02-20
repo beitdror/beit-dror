@@ -1104,7 +1104,7 @@
                             <span id="pendingToggleText">👁️ הצג לא מאושרים</span>
                         </button>
                         <button class="btn btn-primary" onclick="exportToGoogleCalendar()">
-                            📅 ייצא ליומן Google
+                            📅 ייצא ליומן דיגיטלי
                         </button>
                         <button class="btn btn-secondary" onclick="printCombinedSchedule()">
                             🖨️ הדפס
@@ -2997,7 +2997,7 @@
             showPendingInCombined = !showPendingInCombined;
             const btn = document.getElementById('pendingToggleText');
             const ind = document.getElementById('pendingStatusIndicator');
-            if (btn) btn.textContent = showPendingInCombined ? '👁️‍🗨️ הסתר לא מאושרים' : '👁️ הצג לא מאושרים';
+            if (btn) btn.textContent = showPendingInCombined ? '👁️‍🗨️ הסתר ממתינים לאישור' : '👁️ הצג ממתינים לאישור';
             if (ind) ind.style.display = showPendingInCombined ? 'block' : 'none';
             const week = document.getElementById('combinedWeekSelect').value;
             if (week) loadCombinedView();
